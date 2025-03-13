@@ -1,0 +1,730 @@
+Technical Design Document: Hospital Management Website
+
+1. Overview
+
+This document details the technical design for a comprehensive Hospital Management Website that integrates with OpenEMR APIs. This system aims to streamline hospital workflows and enhance patient care through a role-based web interface. It supports five primary user roles: Patients, Receptionists, Clinicians, Pharmacists, and Administrators, each with distinct functionalities. The application leverages OpenEMR's RESTful APIs for all backend operations, ensuring data integrity, consistency, and adherence to healthcare standards. This system will manage core hospital operations including patient registration (OPD & IPD), clinical workflows, pharmacy, billing, emergency services, and administration.
+
+Objectives
+
+- Provide a user-friendly, secure, and role-based web interface for hospital management.
+- Seamlessly integrate with OpenEMR APIs to manage all data operations and workflows.
+- Ensure system scalability, performance, and compliance with healthcare regulations (e.g., HIPAA).
+- Offer customizable and configurable features to adapt to different hospital needs.
+- Provide robust reporting and analytics capabilities for informed decision-making.
+
+User Roles and Functionalities (Detailed)
+
+I. Patient Management (OPD & IPD)
+
+    Patients:
+        *   View personal information (demographics, payer details).
+        *   View medical history (allergies, immunizations, diagnoses, medications, visit history, clinical history, patient documents).
+        *   View charts (monitoring charts - fluid intake/output).
+        *   View and manage appointments (upcoming and past).
+
+    Receptionists:
+        *   Patient Registration:
+            *   Register new patients with mandatory and customizable fields (name, DOB, religion, contact details, etc.).
+            *   Capture patient demographics (name, DOB, gender, religion, address, contact information, etc.).
+            *   Capture payer information (Cash or Insurance, insurance company details, policy number).
+            *   Configure insurance companies and plans within the system.
+            *   Option to capture and store patient photographs.
+            *   Generate and print Registration Cards with barcodes for easy patient identification and scanning.
+            *   Automatically generate unique and permanent Patient Registration Numbers.
+            *   Check for existing patients by name, registration number, or other identifiers before creating a new record.
+        *   Outpatient Visit Management:
+            *   Create outpatient visits, recording visit date, time, and purpose.
+            *   Define and manage customizable visit types (e.g., General Check-up, Specialist Consultation, Follow-up).
+            *   Select department and doctor for the outpatient visit.
+            *   Automatically generate unique Visit Numbers for each outpatient visit (unique per visit).
+        *   Inpatient Management:
+            *   Inpatient Registration (using the same registration process as OPD).
+            *   Patient Admission:
+                *   Select ward for admission.
+                *   Select bed category and specific bed number within the ward.
+                *   Select clinic and department responsible for inpatient care.
+                *   Select admitting doctor for inpatient care.
+                *   Select bill category for inpatient stay (customizable categories).
+            *   Bed Transfer:
+                *   Initiate and manage bed transfers, recording transfer date, time, new bed category, floor, and ward.
+            *   Bed Status Check:
+                *   View real-time bed occupancy status (vacant/occupied) by ward.
+                *   Facilitate bed selection during patient admission by displaying available beds.
+            *   Discharge Management:
+                *   Manage the patient discharge process (record discharge date, time, discharge summary – template based).
+                *   Allow for discharge cancellation if needed.
+            *   Generate reports listing admitted and discharged patients within specified date ranges.
+
+    Clinicians (Doctors & Nurses):
+        *   Clinician Dashboard: Show patient status (New, Nurse Seen, Doctor Seen).
+        *   Appointments Management:
+            *   View and manage their daily/weekly/monthly appointment schedules.
+            *   View appointment details (patient information, visit type, time).
+        *   Patient Record Access:
+            *   Search and select patients.
+            *   Access and review patient medical history (allergies, immunizations, health issues, diagnoses, medications, test results, medical history, social history, visit history, clinical history, patient documents).
+            *   View test results (Lab & Radiology - though Radiology is excluded from implementation, the UI might still show a placeholder).
+            *   Upload patient documents (scanned files, reports, etc.).
+        *   Consultation Management (Doctors):
+            *   Patient Acknowledgment and Selection.
+            *   Consultation Page:
+                *   Review and modify patient vitals.
+                *   Review and add allergies.
+                *   Review nurse assessments.
+                *   Review current medications.
+                *   Record present complaints.
+                *   Record history and examination findings (template-based, customizable templates for specialists).
+            *   Diagnosis:
+                *   Record diagnosis type (Chronic, Acute, Emergency, Principal, Provisional).
+                *   Record diagnosis category (Primary, Additional).
+                *   Integrate with ICD-10 code system (automatic display upon diagnosis selection).
+            *   Investigation and Procedure Ordering (Lab).
+            *   Prescription:
+                *   Select medicines from a drug formulary.
+                *   Specify dosage, frequency, route, instructions, timing, and duration for prescriptions.
+            *   Advice:
+                *   Schedule follow-up visits.
+                *   Refer patients to Emergency/Admission.
+                *   Mark visit as complete.
+                *   Generate medical certificates (template-based).
+                *   Save consultation details.
+        *   Nurse Station Module (Nurses):
+            *   Patient Acknowledgment and Selection.
+            *   Vitals Collection (Blood Pressure, Temperature, Weight, Height, etc.).
+            *   Automatic BMI calculation.
+            *   Nurse Instructions/Notes.
+            *   Triage System:
+                *   Patient condition assessment (Adults, Children, Infants).
+                *   Color-coded triage based on score (Yellow, Green, Orange, Red).
+                *   Time-based alerts based on triage color (e.g., Yellow - doctor see in < 60 mins).
+                *   Allergy and Immunization recording.
+                *   Nurse Assessment Forms (Customizable forms).
+                *   Blood Transfusion documentation and Reaction documentation.
+                *   Monitoring Charts (Fluid intake/output - customizable charts).
+                *   Nurse Diagnosis (optional, configurable).
+                *   Nurse Notes (viewable by doctors).
+                *   Service Order placement (Lab).
+                *   Consumable Request.
+                *   Sample Collection recording.
+                *   Drug Requests to Pharmacy/Store.
+                *   Drug Administration tracking (doses, schedules, administered status - dashboard).
+                *   Blood Request to Blood Bank.
+                *   Discharge Planning, Summary, and Notes (template-based).
+        *   Emergency Module (Clinicians - Doctors & Nurses):
+            *   Emergency Patient Management:
+                *   Service Order placement (Lab).
+                *   Medicine Issuance.
+                *   Allergy Checking.
+                *   Transfer to Inpatient.
+                *   Form management.
+                *   Detail Updates.
+                *   Vitals collection.
+                *   Patient Medical Record access.
+                *   Bed Transfer within ER.
+                *   ER Blood requests.
+                *   Visual indicators for status (Vitals done, Doctor seen, New medicine order, etc.).
+
+    Pharmacists:
+        *   Pharmacy Module (Inventory Management):
+            *   Store creation (Pharmacy, Central Store, Ward-specific stores etc.).
+            *   Receive and manage prescription orders.
+            *   Outpatient Sale/Dispensing (billing from pharmacy).
+            *   Process Doctor's Orders.
+            *   Print bills from pharmacy.
+            *   Discount authority (customizable limits).
+            *   Capture payment details (mode, type, amount, bank, check etc.).
+            *   Dispense medicines and automatically reduce inventory stock.
+            *   Manage Drug Requests from Nurse Stations.
+            *   Link dispensing to nurse's drug administration tracking.
+            *   Process Drug Returns.
+            *   Inventory Management: CRUD operations for medication stock levels, including adding new medications, updating stock, setting reorder levels, and viewing stock reports.
+            *   Low Stock Notifications: System alerts for low stock levels, configurable thresholds.
+            *   Medication Formulary Management: Maintain a list of approved medications, including details like dosage forms, strengths, and generic/brand names.
+
+    Administrators:
+        *   Admin Panel Access (Super User Control & Management Statistics):
+            *   User and Role Management: Create, modify, and delete user accounts; define and manage user roles with granular permissions; assign roles; manage password policies; monitor user activity logs.
+            *   System Configuration & Customization: Manage hospital details, configure customizable elements (mandatory fields, visit types, charges, triage, forms, reports, etc.), manage lists and catalogs (departments, doctors, wards, beds, insurance companies, medications, lab tests, diagnosis codes, etc.), set up billing parameters, configure integrations, manage notifications.
+            *   Security Management: Configure security settings, manage audit logs, implement data encryption, run security audits.
+            *   Reporting and Analytics Management: Access pre-built reports, customize reports, create ad-hoc reports, schedule reports, manage data export/import.
+            *   System Maintenance & Monitoring: Monitor system performance, manage backups, schedule maintenance, view system logs, manage software updates.
+            *   Audit Trails & Logging: Review audit trails of system activities, user actions, data modifications, security events.
+            *   Super User Controls: Initial system setup, emergency maintenance, data management, security policy enforcement, major updates, disaster recovery, troubleshooting, managing admin privileges.
+            *   Management Level Statistics & Information: Dashboards and reports for patient statistics, clinical statistics, financial statistics, operational statistics.
+        *   Billing & Payments Management: Configure billing parameters, manage payment methods, view billing reports, manage discounts and taxes.
+        *   Reporting: Generate and customize various reports (Admitted/Discharged Patients, Financial Reports, Clinical Reports, Operational Reports, Customizable reports as per hospital needs).
+        *   System Control: User access permission management (screen access control), custom template management, customization & configuration of system parameters.
+
+II. Operational & Administrative Features
+
+    *   Appointment Scheduling System: Manage outpatient appointment bookings, schedules, reminders, and waitlists.
+    *   Queue Management System: Organize patient flow in OPD and ER, track wait times.
+    *   Supply Chain Management & Inventory (Beyond Pharmacy): Manage procurement, vendor relations, stock levels, expiry dates, and reordering for all hospital supplies (excluding pharmacy which is separately managed in Pharmacy Module).
+    *   Asset Management: Track location, maintenance, depreciation, and lifecycle of hospital equipment and assets.
+    *   Human Resources (HR) & Staff Management: Manage staff schedules, payroll, credentials, performance reviews, and employee records (potential integration with HR systems).
+    *   Business Intelligence & Analytics Dashboards: Provide visual dashboards with KPIs, trends, and performance metrics.
+    *   Quality Management & Accreditation Support: Support quality improvement, track metrics, manage incidents, audits, and help comply with healthcare accreditation standards.
+    *   Patient Portal: Offer patients online access to medical records, appointments, billing, and secure communication with providers.
+    *   Feedback Management System: Collect, analyze, and track resolution of patient and staff feedback.
+    *   Disaster Recovery & Business Continuity: Ensure system uptime and data protection through backup, redundancy, and recovery plans.
+
+III. Technical & Infrastructure Features
+
+    *   API Integrations & Interoperability: Provide APIs for integration with external systems (labs, HIEs, registries).
+    *   Security & Privacy Compliance: Implement robust security measures (encryption, audit logs, etc.) to comply with HIPAA, GDPR, and other regulations.
+    *   Scalability & Performance: Designed to handle large patient volumes and transactions, scalable to grow with hospital needs.
+    *   Localization & Multi-Language Support: Adaptable for use in different regions with varying languages and healthcare regulations, multi-language support.
+    *   Reporting and Analytics Customization: Allow users to create and modify reports and analytics dashboards.
+
+2. System Architecture
+
+The system adopts a modern web architecture with a Next.js frontend and OpenEMR APIs as the backend.
+
+High-Level Architecture
+
+[Users] --> [Frontend: Next.js + Tailwind CSS] --> [Next.js API Routes (Proxy)] --> [OpenEMR APIs] --> [OpenEMR Database]
+
+Detailed Architecture
+
+- Frontend:
+  - Technology: Next.js (React framework with App Router), Tailwind CSS, React, TypeScript, Redux/Zustand (State Management), Material UI/Ant Design (UI Library), Webpack/Parcel (Bundler), Jest/React Testing Library (Testing).
+  - Functionality: User interface for all user roles, handling user interactions, displaying data fetched from OpenEMR APIs, client-side routing, and state management.
+  - Routing: Next.js App Router for defining routes and page structure. Protected routes implemented for role-based access control.
+  - Components: Reusable UI components built for each module and functionality (LoginForm, PatientDashboard, PatientManagement, AppointmentScheduler, AppointmentViewer, PatientDetails, InventoryManager, StatisticsDashboard, Forms, Tables, Charts, etc.).
+  - Styling: Tailwind CSS for responsive, modern, and accessible UI design.
+- Backend (API Proxy Layer):
+  - Technology: Next.js API Routes (Node.js with Express.js or NestJS could be used for more complex custom services if needed, but for proxying, Next.js API routes are sufficient). TypeScript.
+  - Functionality: Acts as a secure intermediary between the frontend and OpenEMR APIs. Handles request forwarding, adds authentication headers, performs basic request/response transformation if needed, and implements security checks.
+  - Authentication: Integrates with NextAuth.js for authentication, interacting with OpenEMR's authentication APIs.
+  - Authorization: Implements Role-Based Access Control (RBAC) by checking user roles fetched from OpenEMR and enforcing access restrictions.
+  - Caching: React Query or SWR for frontend data caching to improve performance and reduce API calls.
+- OpenEMR APIs:
+  - Technology: OpenEMR's built-in RESTful APIs (PHP-based OpenEMR backend).
+  - Functionality: Provides all backend functionalities including data access (CRUD operations), authentication, authorization, business logic, and integration with the OpenEMR database.
+  - API Endpoints: Provides endpoints for patient management, appointment management, pharmacy, billing, user management, reporting, and other functionalities as detailed in section 5.
+- Database:
+  - Technology: MySQL/MariaDB (as required by OpenEMR). PostgreSQL could be used for custom microservices if needed, but primarily MySQL/MariaDB for OpenEMR data.
+  - Functionality: Stores all hospital data including patient records, appointments, medications, user information, billing details, and system configurations. Managed by OpenEMR. No custom schema required beyond what OpenEMR provides unless extending with custom microservices and PostgreSQL.
+- Infrastructure & Deployment:
+  - Containerization: Docker and Docker Compose for development and potentially for deployment. Kubernetes or Docker Swarm for production orchestration (for scalability and high availability if needed, otherwise simpler hosting on VMs might suffice).
+  - Reverse Proxy & Load Balancer: Nginx for routing requests, load balancing, and SSL termination.
+  - CDN & Security: Cloudflare for CDN, DNS management, and basic security (WAF, DDoS protection).
+  - Cloud Provider: AWS, GCP, or Azure for hosting application servers, databases, and storage.
+  - Hosting (Application Servers): EC2, Compute Engine, or Virtual Machines.
+  - Hosting (Database): RDS for MySQL/MariaDB, Cloud SQL for MySQL, Azure Database for MySQL.
+  - File & Image Hosting: AWS S3, Google Cloud Storage, Azure Blob Storage.
+  - Monitoring & Logging: Prometheus and Grafana, ELK Stack, or cloud provider's monitoring services.
+  - Domain & DNS: GoDaddy, Namecheap, AWS Route 53, Google Domains for domain registration; Cloudflare DNS or cloud provider's DNS for DNS management.
+  - CI/CD: Jenkins, GitLab CI, GitHub Actions, or cloud provider's CI/CD services for automated build, test, and deployment pipelines.
+  - API Documentation: Swagger/OpenAPI for documenting custom APIs if any.
+
+Technology Stack (Detailed)
+
+    Frontend:
+        *   Framework: React (Next.js)
+        *   State Management: Redux or Zustand
+        *   UI Library: Material UI or Ant Design
+        *   Bundler: Webpack or Parcel
+        *   Language: TypeScript
+        *   Testing: Jest and React Testing Library
+
+    Backend (API Proxy & Custom Services if needed):
+        *   Core EMR Backend: OpenEMR (Open Source PHP-based EMR)
+        *   Database: MySQL/MariaDB (OpenEMR Requirement)
+        *   Custom API & Services (for extensions, integrations, performance-critical features):
+            *   Framework: Node.js with Express.js or NestJS (for more complex backend logic beyond proxying, if required)
+            *   Language: TypeScript
+            *   Database (for specific microservices if needed, otherwise extend OpenEMR database): PostgreSQL
+            *   Caching: Redis (if custom services require caching)
+
+    Database:
+        *   Primary EMR Database: MySQL/MariaDB (as required by OpenEMR)
+        *   Secondary Database (Optional, for custom services): PostgreSQL (if Node.js services require separate data)
+
+    Infrastructure & Deployment: (As described in Detailed Architecture above)
+
+    Development & Tools:
+        *   Code Repository: Git (GitHub, GitLab, Bitbucket)
+        *   CI/CD: Jenkins, GitLab CI, GitHub Actions
+        *   API Documentation: Swagger/OpenAPI
+
+    Security & Compliance: (As described in Security & Compliance section below)
+
+3. Frontend Design
+
+Routing Structure (Next.js App Router)
+
+The application will utilize protected routes to ensure role-based access control. Middleware or custom logic will be implemented to enforce these route protections.
+
+Key Routes
+
+    *   /: Redirect to /login if not authenticated, or to appropriate dashboard if authenticated.
+    *   /login: Authentication page for all users.
+    *   /patient/dashboard: Patient-specific dashboard.
+    *   /receptionist/patients: Patient management interface (registration, search).
+    *   /receptionist/appointments: Appointment scheduling and management.
+    *   /clinician/dashboard: Clinician dashboard showing patient status and quick actions.
+    *   /clinician/appointments: Clinician appointment viewer and management.
+    *   /clinician/patients/[id]: Patient record viewer and updater.
+    *   /nurse/dashboard: Nurse dashboard for triage, vitals, and patient monitoring.
+    *   /nurse/patients/[id]: Nurse patient assessment and management page.
+    *   /pharmacy/inventory: Medication inventory management.
+    *   /pharmacy/dispensing: Prescription dispensing interface.
+    *   /admin/dashboard: Admin dashboard with key system statistics and reports.
+    *   /admin/users: User management interface.
+    *   /admin/configuration: System configuration settings.
+    *   /billing/outpatient: Outpatient billing interface.
+    *   /billing/inpatient: Inpatient billing interface.
+    *   /emergency/dashboard: Emergency room dashboard for patient management.
+
+Components
+
+Reusable UI components will be developed for efficiency and consistency across the application. Examples include:
+
+    *   LoginForm: Handles user authentication.
+    *   PatientDashboard: Displays patient information, appointments, and medical history summary.
+    *   PatientManagement: Forms for adding new patients, searching patients, and managing patient details.
+    *   AppointmentScheduler: Interface for scheduling appointments, selecting doctors and departments, and managing appointment slots.
+    *   AppointmentViewer: Lists of appointments with filtering and sorting options for different roles.
+    *   PatientDetails: Displays and allows editing of patient records.
+    *   InventoryManager: CRUD interface for medication stock management.
+    *   StatisticsDashboard: Displays charts and tables for admin reports and analytics.
+    *   UserManagement: Interface for managing user accounts and roles.
+    *   BillingInterface: Forms and tables for generating and managing patient bills.
+    *   TriageForm: Form for nurse triage assessment and scoring.
+    *   VitalsForm: Form for nurses to input patient vitals.
+    *   PrescriptionForm: Form for doctors to create and manage prescriptions.
+    *   MedicationDispensingForm: Form for pharmacists to dispense medications and manage inventory.
+    *   DataGrid/Table Components: Reusable components for displaying tabular data (patient lists, appointment lists, inventory lists, etc.) with features like sorting, filtering, and pagination.
+    *   Form Components: Reusable form elements (text inputs, dropdowns, date pickers, checkboxes, radio buttons, etc.) with validation and error handling.
+    *   Chart Components: For visualizing data in dashboards (line charts, bar charts, pie charts, etc.).
+    *   Modal/Dialog Components: For displaying pop-up messages, confirmation prompts, and forms.
+    *   Navigation Components: Sidebars, top navigation bars, breadcrumbs for site navigation.
+    *   Card Components: To display information in organized blocks.
+    *   Button Components: Reusable button styles and variations.
+    *   Icon Components: Library of icons for visual cues and actions.
+    *   Alert/Notification Components: Displaying system alerts and notifications to users.
+
+Styling
+
+    *   Tailwind CSS: Used for utility-first CSS styling, ensuring responsive, modern, and accessible UI design.
+    *   Design Principles: Focus on intuitive navigation, role-specific dashboards, clear data presentation, accessibility, and a consistent user experience across all modules. Adherence to hospital branding guidelines if provided.
+
+4. Authentication and Authorization
+
+Authentication
+
+    *   Mechanism: NextAuth.js integrated with OpenEMR’s authentication API (e.g., POST /api/auth/login, assuming OpenEMR provides such an API endpoint. If not, custom authentication logic interacting with OpenEMR's user database might be needed).
+    *   Flow:
+        1.  User submits credentials (username/password) via the /login page.
+        2.  Frontend sends a POST request to the Next.js API route (proxy) for authentication.
+        3.  Next.js API route proxies the request to OpenEMR's authentication API endpoint.
+        4.  OpenEMR authenticates the user against its user database.
+        5.  Upon successful authentication, OpenEMR returns a token or session ID.
+        6.  Next.js API route receives the token and sets it as an HTTP-only cookie in the user's browser for session management and secure authentication. Alternatively, a secure JWT token could be used and stored in cookies or local storage (less secure for sensitive data like session tokens, cookies are generally preferred for session management).
+        7.  Frontend receives confirmation of successful login and is redirected to the appropriate dashboard based on user role.
+    *   Password Management: "Forgot Password" feature will utilize OpenEMR’s password reset API if available. If not, a custom password reset flow needs to be implemented, potentially involving email verification and password reset token generation via OpenEMR's backend or custom backend services.
+    *   Session Management: HTTP-only cookies for session tokens to enhance security against XSS attacks. Session expiry and renewal strategies to be implemented.
+
+Authorization
+
+    *   Role-Based Access Control (RBAC):
+        *   User roles (patient, receptionist, clinician, pharmacist, admin, nurse, billing clerk, MRD staff, etc.) are defined in OpenEMR. Upon successful login, the user's role is fetched from OpenEMR (via API).
+        *   Middleware (Next.js middleware or route-specific checks in components) checks the user's role before rendering protected routes and components. If unauthorized, redirect to a /forbidden page or display an error message.
+    *   Implementation:
+        *   Store user role in session state (accessible in frontend after login).
+        *   Frontend components and API proxy routes will check user roles to restrict access to UI elements, functionalities, and API calls.
+        *   Backend (API Proxy) will also perform authorization checks before forwarding requests to OpenEMR APIs, ensuring that users can only access data and functionalities permitted by their roles.
+        *   Granular permission settings for each role will be configured in the Admin Panel, controlling access to specific modules, features, and data (screen access control).
+
+5. API Interactions
+
+The system relies entirely on OpenEMR APIs for backend operations. The Next.js API routes act as a proxy layer.
+
+General Notes
+
+    *   Proxy Layer: Next.js API routes will forward requests to OpenEMR APIs. Authentication headers (Authorization: Bearer <token> or cookies) will be added in the proxy layer before forwarding requests to OpenEMR.
+    *   Error Handling: Graceful error messages will be displayed to the user for API failures (e.g., 404 Not Found, 500 Internal Server Error, network errors). Frontend will handle errors from API responses and display user-friendly messages. Logging of API errors for debugging and monitoring.
+    *   Validation: Input validation will be performed on the frontend before making API calls to ensure data integrity and reduce errors. Backend (OpenEMR APIs) should also perform server-side validation for security and data consistency.
+    *   Data Transformation: Proxy layer might perform basic data transformation between frontend and OpenEMR API formats if necessary.
+    *   API Rate Limiting: Implement rate limiting in the proxy layer to protect OpenEMR APIs from abuse and excessive requests.
+    *   API Versioning: If OpenEMR API versioning is relevant, the system should be designed to handle API versioning appropriately.
+
+API Endpoints by Functionality (Examples - Actual endpoints depend on OpenEMR documentation and OpenEMR API capabilities. These are illustrative and need to be verified against OpenEMR API documentation)
+
+    Authentication
+        *   POST /api/auth/login: Authenticate user, return session token (or set cookie).
+        *   POST /api/auth/logout: Invalidate session/token, logout user.
+        *   POST /api/auth/reset-password: Initiate password reset process.
+        *   POST /api/auth/forgot-password: Request password reset link.
+        *   GET /api/auth/user: Get current user information (including roles/permissions).
+
+    Patient Management
+        *   POST /api/patients: Create a new patient (receptionist, admin).
+        *   GET /api/patients: Search and list patients (receptionist, clinician, admin).  Parameters for search (name, patient ID etc.), pagination, filtering.
+        *   GET /api/patients/[id]: Fetch patient details by ID (patient, clinician, receptionist, admin - role-based access).
+        *   PUT /api/patients/[id]: Update patient record (receptionist, clinician, admin - role-based access, specific fields might be role-restricted).
+        *   DELETE /api/patients/[id]: Delete patient record (admin - potentially restricted access).
+        *   GET /api/patients/[id]/visits: Get visit history for a patient.
+
+    Outpatient Visit Management
+        *   POST /api/visits/outpatient: Create a new outpatient visit (receptionist).
+        *   GET /api/visits/outpatient: List outpatient visits (receptionist, clinician, admin).  Filtering by date, doctor, department, etc.
+        *   GET /api/visits/outpatient/[id]: Get outpatient visit details.
+        *   PUT /api/visits/outpatient/[id]: Update outpatient visit details.
+        *   DELETE /api/visits/outpatient/[id]: Cancel outpatient visit.
+
+    Inpatient Management
+        *   POST /api/admissions: Admit a patient (receptionist).
+        *   GET /api/admissions: List current inpatients (receptionist, clinician, admin). Filtering by ward, department, etc.
+        *   GET /api/admissions/[id]: Get admission details.
+        *   PUT /api/admissions/[id]: Update admission details (bed transfer, etc.).
+        *   POST /api/discharges: Discharge a patient.
+        *   GET /api/discharges: List discharged patients (by date range etc.).
+        *   GET /api/beds/status: Get bed occupancy status by ward.
+        *   GET /api/wards: List available wards.
+        *   GET /api/bed-categories: List available bed categories.
+
+    Appointment Management
+        *   POST /api/appointments: Schedule an appointment (receptionist, clinician).
+        *   GET /api/appointments: List appointments (receptionist, clinician, patient, admin). Filtering by date, clinician, patient, department, status etc.
+        *   GET /api/appointments/[id]: Fetch appointment details.
+        *   PUT /api/appointments/[id]: Update appointment details (reschedule, cancel, update status).
+        *   DELETE /api/appointments/[id]: Cancel appointment.
+
+    Pharmacy Management
+        *   GET /api/inventory: Fetch current medication stock.
+        *   GET /api/inventory/medications: List all medications in formulary.
+        *   GET /api/inventory/medications/[id]: Get medication details.
+        *   POST /api/inventory/medications: Add new medication to formulary (admin, pharmacist).
+        *   PUT /api/inventory/medications/[id]: Update medication details (admin, pharmacist).
+        *   PUT /api/inventory/[medication_id]: Update stock levels for a medication (pharmacist).
+        *   POST /api/prescriptions: Create a new prescription (clinician).
+        *   GET /api/prescriptions/[id]: Get prescription details.
+        *   PUT /api/prescriptions/[id]: Update prescription details.
+        *   POST /api/prescriptions/[id]/fill: Process prescription, decrement inventory (pharmacist).
+        *   GET /api/drug-requests: List drug requests from nurse stations (pharmacist).
+        *   PUT /api/drug-requests/[id]/fulfill: Mark drug request as fulfilled (pharmacist).
+
+    Billing & Payments
+        *   POST /api/billing/outpatient: Create outpatient bill.
+        *   GET /api/billing/outpatient/[id]: Get outpatient bill details.
+        *   PUT /api/billing/outpatient/[id]: Update outpatient bill.
+        *   POST /api/billing/inpatient: Create inpatient bill.
+        *   GET /api/billing/inpatient/[id]: Get inpatient bill details.
+        *   PUT /api/billing/inpatient/[id]: Update inpatient bill.
+        *   POST /api/payments: Record payment for a bill.
+        *   GET /api/payments: List payments (by date range, etc.).
+        *   GET /api/billing/reports/daily-collections: Get daily collections report.
+
+    Admin Features
+        *   GET /api/reports/diseases?year=2023: Fetch disease frequency statistics (example).
+        *   GET /api/users: List all users (admin).
+        *   POST /api/users: Create a new user (admin).
+        *   GET /api/users/[id]: Get user details.
+        *   PUT /api/users/[id]: Update user details (admin).
+        *   DELETE /api/users/[id]: Remove a user (admin).
+        *   GET /api/roles: List available user roles (admin).
+        *   PUT /api/system/configuration: Update system-wide configuration settings (admin).
+        *   GET /api/system/configuration: Get system configuration settings (admin).
+        *   GET /api/audit-logs: Get system audit logs (admin).
+
+    Notifications
+        *   POST /api/notifications: Create a new notification (e.g., low-stock alert).
+        *   GET /api/notifications: List notifications for current user (clinician, pharmacist, admin).
+        *   PUT /api/notifications/[id]/mark-read: Mark notification as read.
+
+    Medical Records (Clinical Data) - Access will be role-based and patient-contextual
+        *   GET /api/patients/[patientId]/allergies: Get patient allergies.
+        *   POST /api/patients/[patientId]/allergies: Add new allergy.
+        *   GET /api/patients/[patientId]/immunizations: Get patient immunizations.
+        *   POST /api/patients/[patientId]/immunizations: Add new immunization.
+        *   GET /api/patients/[patientId]/diagnoses: Get patient diagnoses.
+        *   POST /api/patients/[patientId]/diagnoses: Add new diagnosis.
+        *   GET /api/patients/[patientId]/medications: Get patient medication history.
+        *   POST /api/patients/[patientId]/medications: Add new medication (current medication).
+        *   GET /api/patients/[patientId]/vitals: Get patient vitals history.
+        *   POST /api/patients/[patientId]/vitals: Add new vitals entry.
+        *   GET /api/patients/[patientId]/nurse-assessments: Get nurse assessments for patient.
+        *   POST /api/patients/[patientId]/nurse-assessments: Add new nurse assessment.
+        *   GET /api/patients/[patientId]/consultation-notes: Get doctor consultation notes.
+        *   POST /api/patients/[patientId]/consultation-notes: Add new consultation note.
+        *   POST /api/patients/[patientId]/documents: Upload patient document.
+        *   GET /api/patients/[patientId]/documents: Get list of patient documents.
+        *   GET /api/patients/[patientId]/monitoring-charts: Get patient monitoring charts (fluid intake/output etc.).
+        *   POST /api/patients/[patientId]/monitoring-charts: Add data to monitoring chart.
+
+    Example Proxy Route (Next.js - Example for GET patient details)
+
+    ```javascript
+    // pages/api/patients/[id].js
+    import { getSession } from 'next-auth/react'; // Or your chosen auth method
+
+    export default async function handler(req, res) {
+      const session = await getSession({ req }); // Get session info
+      if (!session) { // Authentication check
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.query;
+      const authToken = session.authToken; // Assuming token is stored in session after login
+
+      try {
+        const response = await fetch(`${process.env.OPENEMR_API_URL}/api/patients/${id}`, { // Use env variable for API URL
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authToken}`, // Pass auth token
+            'Content-Type': 'application/json', // Assuming JSON API
+          },
+        });
+
+        if (!response.ok) { // Handle non-2xx responses as errors
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        res.status(response.status).json(data); // Forward response and status from OpenEMR API
+      } catch (error) {
+        console.error('Error fetching patient details:', error);
+        res.status(500).json({ error: 'Failed to fetch patient details', details: error.message }); // Generic error message
+      }
+    }
+    ```
+
+6. Pharmacy & Inventory Management (Detailed)
+
+Features
+
+    *   Inventory Management:
+        *   CRUD operations for medication formulary and stock levels via /api/inventory/medications and /api/inventory endpoints.
+        *   Pharmacists can add new medications to the formulary, update medication details (name, dosage form, strength, brand/generic, etc.), set reorder levels, and manage stock quantities.
+        *   View current stock levels, reorder levels, and stock history.
+        *   Reporting on inventory levels, stock turnover, and expired medications.
+    *   Prescription Processing:
+        *   Pharmacists receive and process prescriptions generated by clinicians.
+        *   Dispensing medications based on prescriptions, updating inventory stock automatically when dispensing.
+        *   Record dispensing details (patient, medication, quantity dispensed, date, time, dispensing pharmacist).
+        *   Handle prescription refills and renewals (if applicable and supported by OpenEMR API).
+    *   Drug Request Management from Nurse Station:
+        *   Pharmacists receive drug requests from nurse stations via /api/drug-requests.
+        *   Manage and fulfill drug requests, updating inventory upon fulfillment.
+        *   Track status of drug requests.
+    *   Outpatient Sale/Dispensing & Billing:
+        *   Pharmacists handle outpatient medication sales and dispensing directly to patients.
+        *   Integrated billing from pharmacy module for outpatient sales (linking to billing module).
+        *   Generate pharmacy bills and invoices.
+        *   Collect payments for outpatient medication sales.
+    *   Drug Return Functionality:
+        *   Process returns of unused or expired medications back to pharmacy inventory.
+        *   Adjust inventory stock levels upon medication returns.
+        *   Record reasons for medication returns.
+    *   Low Stock Notifications:
+        *   System automatically checks stock levels after each dispensing or inventory update.
+        *   If stock level falls below the configured reorder level for a medication, a low-stock notification is triggered (POST /api/notifications).
+        *   Notifications are displayed to pharmacists and potentially administrators in their dashboards.
+        *   Configurable notification thresholds for each medication.
+    *   Medication Formulary Management:
+        *   Maintain a comprehensive formulary of medications available in the hospital.
+        *   Search and filter medications in the formulary.
+        *   Add, update, and delete medications from the formulary.
+        *   Import/export medication formulary data (e.g., CSV).
+
+Workflow
+
+    1.  Clinician prescribes medication for a patient (via Prescription module).
+    2.  Prescription is sent to the Pharmacy module.
+    3.  Pharmacist reviews the prescription and verifies medication availability.
+    4.  Pharmacist dispenses the medication to the patient (or nurse station for inpatients).
+    5.  System records dispensing details and automatically decrements the inventory stock level for the dispensed medication (POST /api/prescriptions/[id]/fill).
+    6.  System checks the updated stock level against the reorder level.
+    7.  If stock level is below the reorder level, a low-stock notification is created and sent to relevant users (pharmacists, admin).
+    8.  Pharmacists can view and manage inventory levels, process drug requests, handle outpatient sales, and manage medication returns through the Pharmacy module interface.
+    9.  Administrators can access reports on inventory levels, stock turnover, medication usage, and pharmacy operations.
+
+7. Billing & Payments (Detailed)
+
+Features
+
+    *   Outpatient Billing:
+        *   Generate bills for outpatient services: consultation/folder charges, lab tests, pharmacy medications, etc.
+        *   Customizable consultation/folder charges.
+        *   Billing for Lab and Pharmacy services (integrated with Lab and Pharmacy modules).
+        *   Support multi-bill or single-bill concepts (configurable).
+        *   Payment collection through various modes (Cash, Check, Credit Card, Debit Card - payment gateway integration needed for card payments).
+        *   Invoice generation and printing.
+        *   Discount options (percentage/amount based, authority-based discounts, configurable discount rules).
+    *   Inpatient Billing:
+        *   Comprehensive bill generation for inpatients, including: bed charges, doctor visit charges, nursing charges, services provided (lab, pharmacy, etc.), consumables, operation theater charges (if applicable).
+        *   Detailed breakdown of inpatient bills, showing individual charges for each service and item.
+        *   Inpatient billing module integrated with Inpatient Management module for seamless data flow.
+        *   Bed charges calculation based on bed category and duration of stay.
+        *   Service charges calculation based on ordered services.
+        *   Drug charges calculation based on dispensed medications.
+        *   Option to apply package billing or itemized billing (configurable).
+    *   Payment Management:
+        *   Record payments against bills (both outpatient and inpatient).
+        *   Track payment details: mode of payment, payment date, amount, payment reference (check number, transaction ID etc.).
+        *   Payment reconciliation features.
+        *   Reporting on payment collections, outstanding dues, and payment modes.
+    *   Discount and Tax Management:
+        *   Configure discount types (percentage, amount) and rules.
+        *   Authority-based discount approvals (e.g., pharmacist discount limit, admin approval for higher discounts).
+        *   Manage tax rates and apply taxes to bills as per regulations.
+    *   Billing Reports:
+        *   Generate various billing reports: daily collection reports, revenue reports, outstanding dues reports, service-wise revenue reports, payment mode reports, discount reports, tax reports, etc.
+        *   Customizable reporting periods (daily, weekly, monthly, yearly, custom date ranges).
+        *   Export reports in various formats (PDF, CSV, Excel).
+
+Workflow
+
+    1.  Outpatient services are provided (consultation, lab tests, pharmacy dispensing).
+    2.  Billing module collects charges for services from respective modules (Consultation, Lab, Pharmacy).
+    3.  Outpatient bill is generated, including all applicable charges, discounts, and taxes (POST /api/billing/outpatient).
+    4.  Receptionist or billing clerk collects payment from the patient.
+    5.  Payment is recorded against the bill, specifying payment mode and details (POST /api/payments).
+    6.  Invoice is generated and printed for the patient.
+    7.  For inpatients, bill is generated at discharge or periodically (configurable billing cycles).
+    8.  Inpatient bill includes all charges accumulated during the inpatient stay (bed charges, service charges, medication charges, etc.) (POST /api/billing/inpatient).
+    9.  Payment is collected at discharge or as per hospital payment policies and recorded against the inpatient bill.
+    10. Billing reports are generated periodically for financial analysis and reconciliation.
+
+8. Emergency Module (Detailed)
+
+Features
+
+    *   Emergency Patient Management:
+        *   Dedicated dashboard for managing emergency patients.
+        *   Quick patient registration for emergency cases (if not already registered).
+        *   Vitals collection and recording in ER setting.
+        *   Allergy checking and recording.
+        *   Medicine issuance in ER (linked to pharmacy module).
+        *   Service order placement (Lab) in ER context.
+        *   Bed transfer functionality within ER and transfer to inpatient wards.
+        *   ER Blood requests (linked to blood bank if implemented, otherwise general blood request functionality).
+        *   Form management for emergency patient documentation (configurable forms).
+        *   Updating patient details in ER context.
+        *   Quick access to patient medical records in emergency situations.
+        *   Visual indicators for patient status in ER (Vitals done, Doctor seen, New medicine order, etc.) - dashboard display.
+    *   Triage System (already described in Nurse Station module, integrated into ER workflow):
+        *   Patient condition assessment (Adults, Children, Infants).
+        *   Color-coded triage based on score (Yellow, Green, Orange, Red).
+        *   Time-based alerts based on triage color.
+
+Workflow
+
+    1.  Emergency patient arrives at the hospital.
+    2.  Patient is registered (if not already registered) in the ER.
+    3.  Nurse performs triage assessment and assigns triage color/score.
+    4.  Nurse collects patient vitals and records them in the system.
+    5.  Doctor examines the patient in the ER.
+    6.  Doctor orders services (Lab tests), prescribes medications, etc.
+    7.  Nurses or ER staff initiate service orders, request medications from pharmacy, etc.
+    8.  Patient status is tracked visually on the ER dashboard (vitals done, doctor seen, medication ordered, etc.).
+    9.  If inpatient admission is required, patient is transferred from ER to an inpatient ward (bed transfer functionality).
+    10. Emergency room activities and patient data are documented and managed through the Emergency module interface.
+    11. Billing for emergency services is generated (linked to billing module).
+
+9. Admin Panel (Detailed - Super User Control & Management Statistics)
+
+Features (As described in Overview section, expanded here)
+
+    *   User and Role Management:
+        *   Create, read, update, delete (CRUD) operations for user accounts.
+        *   Define and manage user roles (e.g., Super Admin, Doctor, Nurse, Pharmacist, Receptionist, Billing Clerk, MRD Staff, etc.).
+        *   Granular permission settings for each role, controlling access to specific modules, features, API endpoints, and data.
+        *   Assign roles to users and modify role assignments.
+        *   Implement and enforce password policies (password complexity, expiry, etc.).
+        *   Monitor user activity logs for security auditing and tracking user actions.
+    *   System Configuration & Customization:
+        *   Manage system-wide settings: hospital name, logo, address, contact details, default currency, date/time formats, etc.
+        *   Configure customizable elements throughout the system:
+            *   Mandatory fields for patient registration, visit types, consultation charges, service charges, medication prices, triage systems, nurse assessment forms, discharge summary templates, medical certificate templates, report templates, etc.
+        *   Manage lists and catalogs:
+            *   Departments, doctors, wards, bed categories, insurance companies, medications formulary, lab tests catalog, diagnosis codes (ICD-10), etc.
+        *   Set up and manage billing parameters: tax rates, discount rules, payment methods, billing cycles for inpatients, etc.
+        *   Configure integration settings with external systems: Lab machines (if applicable), PACS (Radiology - though excluded), payment gateways (for online payments if implemented), etc.
+        *   Manage system notifications and alerts settings: configure notification types, recipients, thresholds, etc.
+    *   Security Management:
+        *   Configure security settings: password policies, session timeouts, IP address restrictions, etc.
+        *   Manage audit logs: view, filter, export audit logs of system activities, user actions, data modifications, security events.
+        *   Implement and manage data encryption settings (data at rest and data in transit - HTTPS enforced).
+        *   Run security audits and vulnerability scans (schedule and view results).
+        *   Manage security roles and permissions.
+    *   Reporting and Analytics Management:
+        *   Access pre-built management-level reports and dashboards.
+        *   Customize existing reports and create new ad-hoc reports using a report builder tool (if feasible, otherwise pre-defined customizable reports).
+        *   Schedule report generation and distribution (email reports periodically).
+        *   Manage data export and import functionalities (export data in CSV, Excel formats for analysis; import data for initial setup or data migration).
+    *   System Maintenance & Monitoring:
+        *   Monitor system performance: server status, API response times, database health, application performance metrics.
+        *   Manage backups and restore operations: schedule automated backups, initiate manual backups, restore system from backups.
+        *   Schedule system maintenance tasks: database cleanup, log rotation, system updates, etc.
+        *   View system logs and error reports: access application logs, server logs, error logs for troubleshooting.
+        *   Manage software updates and patches: apply system updates and security patches (potentially automated updates or manual update management).
+    *   Audit Trails & Logging:
+        *   Review comprehensive audit trails of all system activities, user actions, data modifications, and security events.
+        *   Generate audit reports for compliance and security investigations. Filter and search audit logs based on user, action, date range, etc.
+    *   Super User Role Scenarios & Controls: (As described in Overview section, expanded here)
+        *   The Super User account has unrestricted access and control over the entire system. Scenarios where Super User control is essential include: initial system setup & configuration, emergency system maintenance, data management & integrity, security policy enforcement, major system updates & upgrades, disaster recovery operations, troubleshooting complex issues, granting and revoking admin privileges.
+    *   Management Level Statistics & Information Examples in Admin Panel: (As described in Overview section, expanded here)
+        *   Dashboards and reports with key statistics for hospital management: Patient Statistics, Clinical Statistics, Financial Statistics, Operational Statistics (examples provided in Overview section).
+        *   Visually informative dashboards and reports for monitoring performance, identifying areas for improvement, and making strategic decisions.
+        *   Customizable dashboard views and report parameters.
+
+10. Security and Compliance
+
+Measures
+
+    *   Data Transmission: Enforce HTTPS for all API calls and frontend access to ensure encrypted communication.
+    *   Authentication: Robust token-based authentication with OpenEMR APIs. Secure session management using HTTP-only cookies. Strong password policies.
+    *   Authorization: Strictly enforce RBAC at route level, UI component level, and API level. Principle of least privilege for user permissions.
+    *   Data Privacy: Implement data access controls to ensure patients access only their own data; clinicians see only authorized patient records; and roles have access only to necessary data. Data encryption at rest and in transit.
+    *   Compliance: Design the system to align with HIPAA (or equivalent healthcare data privacy regulations in the target region). Leverage OpenEMR’s built-in compliance features and implement additional security measures. Audit logs for compliance tracking. Regular security audits and penetration testing.
+    *   Input Validation and Sanitization: Server-side and client-side input validation to prevent injection attacks. Output encoding to prevent XSS vulnerabilities.
+    *   Protection against common web security vulnerabilities: XSS, CSRF, SQL injection, session hijacking, etc.
+
+Best Practices
+
+    *   Avoid exposing OpenEMR API keys or sensitive credentials in the frontend code.
+    *   Use environment variables for sensitive configurations (API URLs, API keys, database credentials, etc.). Securely manage environment variables.
+    *   Implement comprehensive audit logs for security monitoring and compliance. Regularly review audit logs.
+    *   Regular security vulnerability scanning and penetration testing.
+    *   Keep software dependencies and libraries up to date with security patches.
+    *   Secure coding practices throughout the development lifecycle.
+    *   Data backup and disaster recovery plan to ensure business continuity.
+    *   Regular security training for development and operations teams.
+    *   Incident response plan for security breaches and data leaks.
+
+11. Performance Optimization
+
+- Data Fetching: Use React Query or SWR for frontend data caching and revalidation to reduce redundant API calls and improve perceived performance. Caching strategies for frequently accessed data.
+- Large Datasets: Implement pagination or lazy loading for lists of patients, appointments, inventory, and other large datasets to improve initial loading time and reduce server load. Server-side pagination for API responses.
+- Rendering: Leverage Next.js server components for static content and server-side rendering for initial page load performance. Use client components for interactive parts of the UI. Optimize React component rendering and avoid unnecessary re-renders. Code splitting to reduce initial bundle size.
+- Database Optimization: Ensure OpenEMR database is properly indexed and optimized for performance. Optimize database queries used by OpenEMR APIs. Database connection pooling.
+- Load Balancing: Use load balancers (Nginx) to distribute traffic across multiple application server instances for scalability and high availability.
+- CDN: Utilize a Content Delivery Network (Cloudflare) to serve static assets (JavaScript, CSS, images) from geographically closer locations to users, reducing latency.
+- Code Optimization: Optimize frontend and backend code for performance. Profile application performance and identify bottlenecks. Optimize API calls and data processing.
+- Monitoring and Performance Testing: Implement monitoring tools (Prometheus, Grafana, cloud provider monitoring) to track system performance. Conduct regular performance testing and load testing to identify and address performance issues.
+
+12. Testing
+
+- Unit Tests: Use Jest and React Testing Library to write unit tests for individual frontend components, utility functions, and backend logic (if any custom backend services are developed). Focus on testing component logic, UI rendering, and function behavior in isolation.
+- Integration Tests: Verify API interactions by mocking OpenEMR API responses using tools like MSW (Mock Service Worker) or Cypress for API mocking. Test the integration between frontend components and API proxy routes. Test data flow between frontend and backend. Verify error handling and API response parsing.
+- End-to-End Tests: Use Cypress or similar E2E testing frameworks to simulate user workflows from login to performing key functionalities (e.g., login → schedule appointment → view appointment, patient registration → patient search → view patient details, etc.). Test user interface interactions, navigation, data persistence, and overall system workflow. Test across different browsers and devices.
+- Test Coverage: Aim for reasonable test coverage across frontend and backend code. Focus on testing critical functionalities and user workflows.
+- Automated Testing: Integrate tests into the CI/CD pipeline for automated testing on code changes. Run unit tests, integration tests, and E2E tests automatically.
+- Security Testing: Include security testing as part of the testing process. Run static code analysis tools, vulnerability scanners, and penetration testing to identify and fix security vulnerabilities.
+- Performance Testing: Conduct performance testing and load testing to evaluate system performance under different load conditions. Identify performance bottlenecks and optimize performance.
+- User Acceptance Testing (UAT): Conduct UAT with representative users (receptionists, clinicians, pharmacists, admin) to validate system functionalities, usability, and workflow. Gather user feedback and address issues before deployment.
+
+13. Deployment
+
+- Platform: Vercel, Netlify, AWS, GCP, Azure, or similar platforms for hosting Next.js frontend and backend (API proxy). Cloud provider platforms (AWS, GCP, Azure) for hosting OpenEMR infrastructure (if self-hosting OpenEMR) or using cloud-managed OpenEMR services if available.
+- Configuration: Set up environment variables for all configurations: OPENEMR_API_URL, API keys/tokens (if needed for proxy to OpenEMR), database connection strings (if custom services with separate DB), authentication secrets, etc. Securely manage environment variables (using cloud provider secrets management services or secure configuration management tools).
+- Infrastructure: Secure server infrastructure with SSL/TLS certificates (Let's Encrypt or cloud provider certificate manager), firewall rules to restrict access to necessary ports and services, and proper access controls (IAM roles, security groups) to manage access to infrastructure resources. Regular security patching of servers and infrastructure components.
+- Deployment Process: Implement a CI/CD pipeline for automated build, test, and deployment process. Use Git for version control and code repository. Automated deployments to staging and production environments. Rollback strategy in case of deployment failures. Monitoring of application and infrastructure post-deployment.
+- Scalability: Design deployment architecture for scalability. Use containerization (Docker), orchestration (Kubernetes or Docker Swarm), load balancing, and horizontally scalable application servers and databases to handle increasing user load and data volume. Plan for horizontal scaling if needed in the future.
+- Monitoring and Logging: Implement comprehensive monitoring and logging in production environment. Use monitoring tools (Prometheus, Grafana, cloud provider monitoring) to track application and infrastructure metrics. Centralized logging (ELK stack or cloud provider logging services) for application logs, server logs, and access logs. Alerting and notifications for critical system issues and errors.
+- Disaster Recovery: Implement a disaster recovery plan and business continuity plan. Regular data backups, offsite backups, and procedures for restoring system from backups in case of failures. Redundancy and high availability setup to minimize downtime. Disaster recovery drills and testing.
+
+This TDD provides a comprehensive technical design for the Hospital Management Website. It is detailed enough to serve as a blueprint for development, covering all key aspects from frontend to backend, infrastructure, security, testing, and deployment. Remember to adapt and refine this TDD based on specific project requirements, OpenEMR API documentation, and evolving needs during development. Continuous review and updates to the TDD are recommended throughout the project lifecycle.
