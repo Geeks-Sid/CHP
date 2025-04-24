@@ -134,9 +134,9 @@ const PatientsList = () => {
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <p className="text-muted-foreground">No patients found</p>
                     {searchQuery && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setSearchQuery('')}
                       >
                         Clear search
@@ -153,13 +153,21 @@ const PatientsList = () => {
                   <TableCell>{patient.email}</TableCell>
                   <TableCell>{patient.phone}</TableCell>
                   <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleViewPatient(patient.id)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       View
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="ml-2"
+                      onClick={() => console.log(`Transfer patient ${patient.id}`)}
+                    >
+                      Transfer
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -79,7 +79,7 @@ const Sidebar = () => {
       { icon: UsersIcon, label: 'User Management', path: '/admin/users' },
       { icon: Settings2Icon, label: 'System Settings', path: '/admin/settings' },
       { icon: HistoryIcon, label: 'Audit Logs', path: '/admin/audit' },
-      
+
       // Access to all main parts of the system
       { icon: DatabaseIcon, label: 'All Patients', path: '/patients' },
       { icon: CalendarIcon, label: 'All Appointments', path: '/appointments' },
@@ -87,6 +87,12 @@ const Sidebar = () => {
       { icon: PillIcon, label: 'Medications', path: '/medications' },
       { icon: PackageIcon, label: 'Inventory', path: '/inventory' },
       { icon: FileTextIcon, label: 'Reports', path: '/reports' },
+      { icon: UserIcon, label: 'Profile', path: '/profile' },
+    ],
+    warehousemanager: [
+      { icon: HomeIcon, label: 'Dashboard', path: '/dashboard' }, // Assuming a general dashboard for now
+      { icon: PackageIcon, label: 'Warehouse Inventory', path: '/inventory/warehouse' },
+      { icon: PillIcon, label: 'Medicine Inventory', path: '/inventory/medicine' },
       { icon: UserIcon, label: 'Profile', path: '/profile' },
     ],
   };

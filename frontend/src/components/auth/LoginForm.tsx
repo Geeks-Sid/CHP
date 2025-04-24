@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { LockIcon, MailIcon, UserIcon, PillIcon } from 'lucide-react';
+import { LockIcon, MailIcon, UserIcon, PillIcon, PackageIcon } from 'lucide-react';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +18,7 @@ const LoginForm = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         variant: "destructive",
@@ -27,9 +27,9 @@ const LoginForm = () => {
       });
       return;
     }
-    
+
     setIsPending(true);
-    
+
     try {
       await login(email, password);
       toast({
@@ -50,7 +50,7 @@ const LoginForm = () => {
 
   // Example login credentials
   const handleDemoLogin = (role: string) => {
-    switch(role) {
+    switch (role) {
       case 'patient':
         setEmail('patient@example.com');
         setPassword('password');
@@ -65,6 +65,10 @@ const LoginForm = () => {
         break;
       case 'pharmacy':
         setEmail('pharmacy@example.com');
+        setPassword('password');
+        break;
+      case 'warehousemanager':
+        setEmail('warehouse@example.com');
         setPassword('password');
         break;
     }
@@ -99,7 +103,7 @@ const LoginForm = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10" 
+                className="pl-10"
                 required
               />
             </div>
@@ -114,41 +118,50 @@ const LoginForm = () => {
           Demo Accounts (Click to autofill)
         </div>
         <div className="grid grid-cols-2 gap-2 w-full">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleDemoLogin('patient')}
             className="flex-1"
           >
             <UserIcon className="mr-2 h-4 w-4" />
             Patient
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleDemoLogin('receptionist')}
             className="flex-1"
           >
             <UserIcon className="mr-2 h-4 w-4" />
             Receptionist
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleDemoLogin('clinician')}
             className="flex-1"
           >
             <UserIcon className="mr-2 h-4 w-4" />
             Clinician
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleDemoLogin('pharmacy')}
             className="flex-1"
           >
             <PillIcon className="mr-2 h-4 w-4" />
             Pharmacy
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDemoLogin('warehousemanager')}
+            className="flex-1"
+          >
+            <PackageIcon className="mr-2 h-4 w-4" /> {/* Using PackageIcon for warehouse */}
+            Warehouse Manager
           </Button>
         </div>
       </CardFooter>

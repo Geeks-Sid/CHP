@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type UserRole = 'patient' | 'receptionist' | 'clinician' | 'pharmacy' | 'admin';
+export type UserRole = 'patient' | 'receptionist' | 'clinician' | 'pharmacy' | 'admin' | 'warehousemanager';
 
 export interface User {
   id: string;
@@ -57,6 +57,13 @@ const mockUsers: User[] = [
     email: 'admin@example.com',
     role: 'admin',
     profileImage: 'https://i.pravatar.cc/150?img=5'
+  },
+  {
+    id: '6',
+    name: 'Warehouse Manager',
+    email: 'warehouse@example.com',
+    role: 'warehousemanager',
+    profileImage: 'https://i.pravatar.cc/150?img=6'
   }
 ];
 
@@ -78,14 +85,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Find user by email (password is not checked in this demo)
       const foundUser = mockUsers.find(u => u.email === email);
-      
+
       if (!foundUser) {
         throw new Error('Invalid credentials');
       }
-      
+
       // Store user in state and localStorage
       setUser(foundUser);
       localStorage.setItem('medicalAppUser', JSON.stringify(foundUser));
