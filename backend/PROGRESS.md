@@ -2,143 +2,150 @@
 
 ## Phase 1: Foundation & Infrastructure ✅ COMPLETED
 
+See previous progress...
+
+## Phase 2: Authentication & Authorization ✅ COMPLETED
+
 ### Completed Tasks
 
-- [x] **Repository Bootstrap** (Task 2)
-  - ✅ Created NestJS project structure
-  - ✅ TypeScript with strict mode
-  - ✅ ESLint and Prettier configured
-  - ✅ package.json with all dependencies
+- [x] **Password Hashing Service** (Task 25)
+  - ✅ bcrypt with 12 rounds (high security)
+  - ✅ Constant-time comparison (prevents timing attacks)
+  - ✅ Password strength validation
+  - ✅ Common password detection
 
-- [x] **Database Migrations** (Tasks 5-18)
-  - ✅ V000: Extensions and baseline
-  - ✅ V001: Roles and permissions tables
-  - ✅ V002: Users and user_roles tables + refresh_tokens
-  - ✅ V003: Audit log table and function
-  - ✅ V004: Person table (OMOP-light)
-  - ✅ V005: Visit_occurrence table
-  - ✅ V006: Procedure_occurrence table
-  - ✅ V007: Drug_exposure table
-  - ✅ V008: Document table
-  - ✅ V009: Vocabulary tables
-  - ✅ V010: Sequences for MRN and Visit numbers
-  - ✅ V011: Seed roles and permissions
-  - ✅ V012: Seed admin user
+- [x] **JWT Service** (Task 26)
+  - ✅ Access tokens (15 minutes TTL)
+  - ✅ Refresh tokens (7 days TTL)
+  - ✅ Secure token generation (64-byte random)
+  - ✅ Token verification with proper error handling
+  - ✅ HS256 algorithm with minimum 32-char secret
 
-- [x] **NestJS App Scaffold** (Task 3)
-  - ✅ Created NestJS app with Fastify adapter
-  - ✅ Global validation pipes
-  - ✅ CORS configuration
-  - ✅ Global exception filter
+- [x] **Refresh Token Store** (Task 27)
+  - ✅ Tokens hashed with bcrypt before storage
+  - ✅ Device metadata tracking (IP, User-Agent)
+  - ✅ Token rotation on refresh
+  - ✅ Revocation support (single or all devices)
+  - ✅ Expired token cleanup
 
-- [x] **Configuration Module** (Task 4)
-  - ✅ Zod-validated configuration
-  - ✅ Environment variables for DB, JWT, S3
-  - ✅ Type-safe config exports
+- [x] **Auth Controllers** (Tasks 28, 29, 30)
+  - ✅ POST `/api/v1/auth/login` - Login with rate limiting
+  - ✅ POST `/api/v1/auth/refresh` - Token refresh with rotation
+  - ✅ POST `/api/v1/auth/logout` - Logout with token revocation
+  - ✅ GET `/api/v1/auth/me` - Get current user info
 
-- [x] **Database Connection** (Task 19)
-  - ✅ PostgreSQL pool wrapper
-  - ✅ Connection timeouts and retries
-  - ✅ Health check queries
-  - ✅ Transaction helper (`withTransaction`)
+- [x] **Auth Guards** (Task 31)
+  - ✅ JwtAuthGuard - Verifies JWT and attaches user to request
+  - ✅ PermissionsGuard - Checks user permissions from database
 
-- [x] **Error Handling** (Tasks 20, 65)
-  - ✅ Error mapper: SQLSTATE → HTTP errors
-  - ✅ Consistent error response shape
-  - ✅ Global exception filter
+- [x] **Permissions Guard** (Task 32)
+  - ✅ `@Permissions(...)` decorator
+  - ✅ Database-backed permission checks
+  - ✅ RBAC enforcement
 
-- [x] **Request ID Middleware** (Task 21)
-  - ✅ Inject request ID
-  - ✅ Propagate in logs
-
-- [x] **Logging** (Task 22)
-  - ✅ Pino structured logging
-  - ✅ PHI redaction configuration
-  - ✅ Request ID, route, status in logs
-
-- [x] **Health Endpoints** (Task 64)
-  - ✅ `/health` (liveness)
-  - ✅ `/ready` (DB ping)
-
-- [x] **Response Wrapper** (Task 99)
-  - ✅ Transform interceptor for standard responses
-
-- [x] **Header Contracts** (Task 100)
-  - ✅ Enforce `X-Request-ID`
-
-- [x] **Docker Compose** (Task 110)
-  - ✅ Postgres, Redis, MinIO setup
+- [x] **Security Features** (Tasks 33, 34, 102, 103)
+  - ✅ Rate limiting (5 attempts/min for login, 10/min for refresh)
+  - ✅ Account lockout (5 failed attempts = 15 min lockout)
+  - ✅ Password policy (12+ chars, complexity requirements)
+  - ✅ Exponential backoff on lockouts
 
 ### Files Created
 
-**Configuration:**
-- `package.json` - Dependencies and scripts
-- `tsconfig.json` - TypeScript configuration
-- `nest-cli.json` - NestJS CLI configuration
-- `.eslintrc.js` - ESLint rules
-- `.prettierrc` - Prettier configuration
-- `.gitignore` - Git ignore rules
-- `.env.example` - Environment template
+**Services:**
+- `src/auth/services/password.service.ts` - Secure password hashing and validation
+- `src/auth/services/jwt.service.ts` - JWT token generation and verification
+- `src/auth/services/refresh-token.service.ts` - Refresh token management
+- `src/auth/services/account-lockout.service.ts` - Brute force protection
 
-**Database:**
-- `database/migrations/V000-V012.sql` - All migration files
-- `database/docker-compose.yml` - Local development setup
+**Core:**
+- `src/auth/auth.service.ts` - Main authentication service
+- `src/auth/auth.controller.ts` - Auth endpoints with rate limiting
+- `src/auth/auth.module.ts` - Auth module configuration
 
-**Application:**
-- `src/main.ts` - Application entry point
-- `src/app.module.ts` - Root module
-- `src/config/configuration.ts` - Zod-validated config
-- `src/database/database.module.ts` - Database module
-- `src/database/database.service.ts` - Database service with pool
-- `src/common/logger/logger.config.ts` - Pino logger
-- `src/common/middleware/request-id.middleware.ts` - Request ID middleware
-- `src/common/filters/http-exception.filter.ts` - Exception filter
-- `src/common/interceptors/transform.interceptor.ts` - Response transformer
-- `src/utils/error-mapper.util.ts` - Database error mapper
-- `src/health/health.module.ts` - Health module
-- `src/health/health.controller.ts` - Health endpoints
+**Guards & Decorators:**
+- `src/auth/guards/jwt-auth.guard.ts` - JWT verification guard
+- `src/auth/guards/permissions.guard.ts` - Permission checking guard
+- `src/auth/decorators/current-user.decorator.ts` - Extract current user
+- `src/auth/decorators/permissions.decorator.ts` - Require permissions
+
+**DTOs:**
+- `src/auth/dto/login.dto.ts` - Login request validation
+- `src/auth/dto/refresh.dto.ts` - Refresh token request validation
+- `src/auth/dto/logout.dto.ts` - Logout request validation
 
 **Documentation:**
-- `README.md` - Project documentation
-- `PROGRESS.md` - This file
+- `src/auth/SECURITY.md` - Security features documentation
+
+### Security Features Implemented
+
+1. ✅ **Strong Password Hashing**: bcrypt with 12 rounds
+2. ✅ **Token Rotation**: Refresh tokens rotated on every use
+3. ✅ **Account Lockout**: 5 attempts = 15 min lockout
+4. ✅ **Rate Limiting**: Prevents brute force attacks
+5. ✅ **Constant-Time Operations**: Prevents timing attacks
+6. ✅ **Secure Token Storage**: Hashed refresh tokens
+7. ✅ **Device Tracking**: IP and User-Agent tracking
+8. ✅ **Error Message Security**: No information leakage
+9. ✅ **Input Validation**: DTO validation with class-validator
+10. ✅ **Audit Logging**: Comprehensive security event logging
+
+### API Endpoints
+
+- `POST /api/v1/auth/login` - Login (rate limited: 5/min)
+- `POST /api/v1/auth/refresh` - Refresh token (rate limited: 10/min)
+- `POST /api/v1/auth/logout` - Logout (requires JWT)
+- `GET /api/v1/auth/me` - Get current user (requires JWT)
+
+### Usage Example
+
+```typescript
+// In a controller
+@Controller('users')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+export class UsersController {
+  @Get()
+  @Permissions('user.read')
+  async getUsers(@CurrentUser() user: CurrentUser) {
+    // user.userId, user.username, user.email, user.roles
+  }
+}
+```
 
 ### Next Steps
 
-**Phase 2: Authentication & Authorization**
-- Password hashing service
-- JWT service (access + refresh)
-- Auth controllers (login, refresh, logout)
-- Auth guards
-- Permissions guard with decorator
-- Security features (CSRF, rate limiting, password policy)
+**Phase 3: Users Management**
+- Users repository
+- Users service
+- Users controller (CRUD)
+- DTO validation
+- Permissions seeding script
 
-See `.temp/chunk-02-authentication.md` for detailed breakdown.
+See `.temp/chunk-03-users.md` for detailed breakdown.
 
 ### Testing
 
-To test the current setup:
+To test authentication:
 
 ```bash
-# Start database
-cd database
-docker-compose up -d
+# Login
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"ChangeMe123!"}'
 
-# Install dependencies
-cd ../backend
-npm install
+# Use access token
+curl http://localhost:3000/api/v1/auth/me \
+  -H "Authorization: Bearer <access_token>"
 
-# Start server
-npm run start:dev
-
-# Test health endpoint
-curl http://localhost:3000/api/v1/health
-curl http://localhost:3000/api/v1/ready
+# Refresh token
+curl -X POST http://localhost:3000/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"<refresh_token>"}'
 ```
 
 ### Notes
 
-- All migrations are ready but need to be run manually or via migration tool
-- JWT_SECRET in .env.example should be changed before production
-- Admin user password hash in V012 should be rotated after first login
-- Middleware uses Fastify hooks (not Express-style)
-
+- JWT_SECRET must be at least 32 characters (validated at startup)
+- Account lockout uses in-memory storage (use Redis in production)
+- Refresh tokens are hashed before storage (cannot be retrieved)
+- All authentication endpoints are rate limited
+- Swagger docs available at `/api/docs` (non-production only)

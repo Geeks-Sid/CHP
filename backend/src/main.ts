@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { logger } from './common/logger/logger.config';
@@ -11,6 +12,28 @@ async function bootstrap() {
         AppModule,
         new FastifyAdapter({ logger: false }),
     );
+
+    // Swagger/OpenAPI documentation
+    if (process.env.NODE_ENV !== 'production') {
+        const config = new DocumentBuilder()
+            .setTitle('Hospital Management System API')
+            .setDescription('Backend API for Hospital Management System')
+            .setVersion('1.0')
+            .addBearerAuth(
+                {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                    name: 'JWT',
+                    description: 'Enter JWT token',
+                    in: 'header',
+                },
+                'JWT-auth',
+            )
+            .build();
+        const document = SwaggerModule.createDocument(app, config);
+        SwaggerModule.setup('api/docs', app, document);
+    }
 
     // Request ID middleware - register via Fastify hook
     const requestIdMiddleware = new RequestIdMiddleware();
