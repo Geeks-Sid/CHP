@@ -1,0 +1,215 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging-api.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging-latest
+            type=sha,prefix=staging-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: latest
+
+      - name: Create SBOM
+        run: |
+          syft ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-latest -o spdx-json > sbom.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-staging
+          path: sbom.json
+          retention-days: 90
+
+      - name: Deploy to Kubernetes (Staging)
+        uses: azure/k8s-deploy@v4
+        if: env.KUBERNETES_ENABLED == 'true'
+        with:
+          manifests: |
+            helm/chart/templates/*
+          namespace: staging
+          kubeconfig: ${{ secrets.KUBECONFIG_STAGING }}
+          strategy: blue-green
+          traffic-split-method: smi
+          baseline-and-canary-replicas: 2
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to be ready..."
+          sleep 30
+          for i in {1..10}; do
+            if curl -f https://staging-api.example.com/api/v1/health; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Health check attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Health check failed after 10 attempts"
+          exit 1
+
+      - name: Rollback on failure
+        if: failure()
+        uses: azure/k8s-deploy@v4
+        with:
+          action: rollback
+          namespace: staging
+          kubeconfig: ${{ secrets.KUBECONFIG_STAGING }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://api.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: latest
+
+      - name: Create SBOM
+        run: |
+          syft ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -o spdx-json > sbom.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-production
+          path: sbom.json
+          retention-days: 365
+
+      - name: Deploy to Kubernetes (Production)
+        uses: azure/k8s-deploy@v4
+        if: env.KUBERNETES_ENABLED == 'true'
+        with:
+          manifests: |
+            helm/chart/templates/*
+          namespace: production
+          kubeconfig: ${{ secrets.KUBECONFIG_PRODUCTION }}
+          strategy: blue-green
+          traffic-split-method: smi
+          baseline-and-canary-replicas: 3
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to be ready..."
+          sleep 60
+          for i in {1..15}; do
+            if curl -f https://api.example.com/api/v1/health && \
+               curl -f https://api.example.com/api/v1/ready; then
+              echo "Health checks passed"
+              exit 0
+            fi
+            echo "Health check attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Health check failed after 15 attempts"
+          exit 1
+
+      - name: Rollback on failure
+        if: failure()
+        uses: azure/k8s-deploy@v4
+        with:
+          action: rollback
+          namespace: production
+          kubeconfig: ${{ secrets.KUBECONFIG_PRODUCTION }}
+
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "Production deployment successful"
+          # Add notification logic here (Slack, email, etc.)
+

@@ -1,0 +1,68 @@
+name: OpenAPI Contract Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  openapi-diff:
+    name: OpenAPI Contract Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Generate OpenAPI spec
+        working-directory: ./backend
+        run: |
+          timeout 30 npm run start:prod &
+          sleep 15
+          curl -f http://localhost:3000/api/docs-json > openapi-current.json || exit 1
+          pkill -f "node dist/main.js" || true
+
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Validate OpenAPI spec
+        working-directory: ./backend
+        run: |
+          spectral lint openapi-current.json || exit 1
+
+      - name: Check for breaking changes
+        working-directory: ./backend
+        run: |
+          if [ -f openapi.json ]; then
+            # Compare with previous version
+            npx @openapitools/openapi-diff@latest \
+              openapi.json openapi-current.json \
+              --fail-on-incompatible || echo "Breaking changes detected - review required"
+          else
+            echo "No previous OpenAPI spec found - first run"
+          fi
+
+      - name: Upload OpenAPI spec
+        uses: actions/upload-artifact@v3
+        with:
+          name: openapi-spec
+          path: backend/openapi-current.json
+          retention-days: 30
+

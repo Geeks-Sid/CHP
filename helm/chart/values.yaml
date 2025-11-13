@@ -1,0 +1,132 @@
+replicaCount: 3
+
+image:
+  repository: ghcr.io/your-org/hospital-backend
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+  runAsUser: 1001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+livenessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /api/v1/ready
+    port: 3000
+  initialDelaySeconds: 40
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: PORT
+    value: "3000"
+  - name: PGHOST
+    valueFrom:
+      secretKeyRef:
+        name: hospital-secrets
+        key: pghost
+  - name: PGPORT
+    value: "5432"
+  - name: PGDATABASE
+    valueFrom:
+      secretKeyRef:
+        name: hospital-secrets
+        key: pgdatabase
+  - name: PGUSER
+    valueFrom:
+      secretKeyRef:
+        name: hospital-secrets
+        key: pguser
+  - name: PGPASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: hospital-secrets
+        key: pgpassword
+  - name: JWT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: hospital-secrets
+        key: jwt-secret
+  - name: JWT_ACCESS_TTL
+    value: "900"
+  - name: JWT_REFRESH_TTL
+    value: "604800"
+  - name: JWT_ISSUER
+    value: "hospital-ms"
+  - name: CORS_ORIGIN
+    value: "https://app.example.com"
+
+secretMounts: []
+
+volumes: []
+
+volumeMounts: []
+

@@ -35,26 +35,37 @@ async function bootstrap() {
     });
 
     // Swagger/OpenAPI documentation
-    if (process.env.NODE_ENV !== 'production') {
-        const config = new DocumentBuilder()
-            .setTitle('Hospital Management System API')
-            .setDescription('Backend API for Hospital Management System')
-            .setVersion('1.0')
-            .addBearerAuth(
-                {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                    name: 'JWT',
-                    description: 'Enter JWT token',
-                    in: 'header',
-                },
-                'JWT-auth',
-            )
-            .build();
-        const document = SwaggerModule.createDocument(app, config);
-        SwaggerModule.setup('api/docs', app, document);
-    }
+    const config = new DocumentBuilder()
+        .setTitle('Hospital Management System API')
+        .setDescription('Backend API for Hospital Management System')
+        .setVersion('1.0')
+        .addBearerAuth(
+            {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+                name: 'JWT',
+                description: 'Enter JWT token',
+                in: 'header',
+            },
+            'JWT-auth',
+        )
+        .build();
+    const document = SwaggerModule.createDocument(app, config);
+    
+    // In production, Swagger is available but should be protected at network/ingress level
+    // For development, it's open for easier testing
+    const swaggerOptions = process.env.NODE_ENV === 'production'
+        ? {
+            customSiteTitle: 'Hospital Management System API',
+            customCss: '.swagger-ui .topbar { display: none }',
+            swaggerOptions: {
+                persistAuthorization: true,
+            },
+        }
+        : {};
+    
+    SwaggerModule.setup('api/docs', app, document, swaggerOptions);
 
     // Request ID middleware - register via Fastify hook
     const requestIdMiddleware = new RequestIdMiddleware();

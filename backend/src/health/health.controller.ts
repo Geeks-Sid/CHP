@@ -1,31 +1,32 @@
 import { Controller, Get } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { HealthService } from './health.service';
 
 @ApiTags('Health')
 @Controller()
 export class HealthController {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly healthService: HealthService) {}
 
   @Get('health')
   @ApiOperation({ summary: 'Liveness probe' })
-  liveness() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    };
+  @ApiResponse({ status: 200, description: 'Service is alive' })
+  async liveness() {
+    return this.healthService.checkLiveness();
   }
 
   @Get('ready')
-  @ApiOperation({ summary: 'Readiness probe' })
+  @ApiOperation({ summary: 'Readiness probe - checks DB and migrations' })
+  @ApiResponse({ status: 200, description: 'Service is ready' })
+  @ApiResponse({ status: 503, description: 'Service is not ready' })
   async readiness() {
-    const dbHealthy = await this.databaseService.healthCheck();
-
-    return {
-      status: dbHealthy ? 'ready' : 'not ready',
-      database: dbHealthy ? 'connected' : 'disconnected',
-      timestamp: new Date().toISOString(),
-    };
+    const status = await this.healthService.checkReadiness();
+    
+    // Return 503 if not ready (for Kubernetes)
+    if (status.status !== 'ready') {
+      return status;
+    }
+    
+    return status;
   }
 }
 

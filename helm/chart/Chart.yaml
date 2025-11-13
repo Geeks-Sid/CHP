@@ -1,0 +1,13 @@
+apiVersion: v2
+name: hospital-backend
+description: Hospital Management System Backend Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - hospital
+  - healthcare
+  - nestjs
+maintainers:
+  - name: Hospital DevOps Team
+
