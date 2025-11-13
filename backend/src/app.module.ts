@@ -9,7 +9,9 @@ import { HealthModule } from './health/health.module';
 import { DocumentsModule } from './documents/documents.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
+import { FhirModule } from './fhir/fhir.module';
 import { ProceduresModule } from './procedures/procedures.module';
+import { ReportsModule } from './reports/reports.module';
 import { TerminologyModule } from './terminology/terminology.module';
 import { UsersModule } from './users/users.module';
 import { VisitsModule } from './visits/visits.module';
@@ -38,6 +40,8 @@ import { VisitsModule } from './visits/visits.module';
     MedicationsModule,
     DocumentsModule,
     TerminologyModule,
+    FhirModule,
+    ReportsModule,
   ],
   providers: [
     {
