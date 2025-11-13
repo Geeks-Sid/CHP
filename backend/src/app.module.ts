@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { DocumentsModule } from './documents/documents.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
 import { ProceduresModule } from './procedures/procedures.module';
@@ -34,6 +35,7 @@ import { VisitsModule } from './visits/visits.module';
     VisitsModule,
     ProceduresModule,
     MedicationsModule,
+    DocumentsModule,
   ],
   providers: [
     {

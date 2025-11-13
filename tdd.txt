@@ -2,12 +2,12 @@ Technical Design Document: Hospital Management Website
 
 1. Overview
 
-This document details the technical design for a comprehensive Hospital Management Website that integrates with OpenEMR APIs. This system aims to streamline hospital workflows and enhance patient care through a role-based web interface. It supports five primary user roles: Patients, Receptionists, Clinicians, Pharmacists, and Administrators, each with distinct functionalities. The application leverages OpenEMR's RESTful APIs for all backend operations, ensuring data integrity, consistency, and adherence to healthcare standards. This system will manage core hospital operations including patient registration (OPD & IPD), clinical workflows, pharmacy, billing, emergency services, and administration.
+This document details the technical design for a comprehensive Hospital Management Website that integrates with our_backend_service APIs. This system aims to streamline hospital workflows and enhance patient care through a role-based web interface. It supports five primary user roles: Patients, Receptionists, Clinicians, Pharmacists, and Administrators, each with distinct functionalities. The application leverages our_backend_service's RESTful APIs for all backend operations, ensuring data integrity, consistency, and adherence to healthcare standards. This system will manage core hospital operations including patient registration (OPD & IPD), clinical workflows, pharmacy, billing, emergency services, and administration.
 
 Objectives
 
 - Provide a user-friendly, secure, and role-based web interface for hospital management.
-- Seamlessly integrate with OpenEMR APIs to manage all data operations and workflows.
+- Seamlessly integrate with our_backend_service APIs to manage all data operations and workflows.
 - Ensure system scalability, performance, and compliance with healthcare regulations (e.g., HIPAA).
 - Offer customizable and configurable features to adapt to different hospital needs.
 - Provide robust reporting and analytics capabilities for informed decision-making.
@@ -178,33 +178,33 @@ III. Technical & Infrastructure Features
 
 2. System Architecture
 
-The system adopts a modern web architecture with a Next.js frontend and OpenEMR APIs as the backend.
+The system adopts a modern web architecture with a Next.js frontend and our_backend_service APIs as the backend.
 
 High-Level Architecture
 
-[Users] --> [Frontend: Next.js + Tailwind CSS] --> [Next.js API Routes (Proxy)] --> [OpenEMR APIs] --> [OpenEMR Database]
+[Users] --> [Frontend: Next.js + Tailwind CSS] --> [Next.js API Routes (Proxy)] --> [our_backend_service APIs] --> [our_backend_service Database]
 
 Detailed Architecture
 
 - Frontend:
   - Technology: Next.js (React framework with App Router), Tailwind CSS, React, TypeScript, Redux/Zustand (State Management), Material UI/Ant Design (UI Library), Webpack/Parcel (Bundler), Jest/React Testing Library (Testing).
-  - Functionality: User interface for all user roles, handling user interactions, displaying data fetched from OpenEMR APIs, client-side routing, and state management.
+  - Functionality: User interface for all user roles, handling user interactions, displaying data fetched from our_backend_service APIs, client-side routing, and state management.
   - Routing: Next.js App Router for defining routes and page structure. Protected routes implemented for role-based access control.
   - Components: Reusable UI components built for each module and functionality (LoginForm, PatientDashboard, PatientManagement, AppointmentScheduler, AppointmentViewer, PatientDetails, InventoryManager, StatisticsDashboard, Forms, Tables, Charts, etc.).
   - Styling: Tailwind CSS for responsive, modern, and accessible UI design.
 - Backend (API Proxy Layer):
   - Technology: Next.js API Routes (Node.js with Express.js or NestJS could be used for more complex custom services if needed, but for proxying, Next.js API routes are sufficient). TypeScript.
-  - Functionality: Acts as a secure intermediary between the frontend and OpenEMR APIs. Handles request forwarding, adds authentication headers, performs basic request/response transformation if needed, and implements security checks.
-  - Authentication: Integrates with NextAuth.js for authentication, interacting with OpenEMR's authentication APIs.
-  - Authorization: Implements Role-Based Access Control (RBAC) by checking user roles fetched from OpenEMR and enforcing access restrictions.
+  - Functionality: Acts as a secure intermediary between the frontend and our_backend_service APIs. Handles request forwarding, adds authentication headers, performs basic request/response transformation if needed, and implements security checks.
+  - Authentication: Integrates with NextAuth.js for authentication, interacting with our_backend_service's authentication APIs.
+  - Authorization: Implements Role-Based Access Control (RBAC) by checking user roles fetched from our_backend_service and enforcing access restrictions.
   - Caching: React Query or SWR for frontend data caching to improve performance and reduce API calls.
-- OpenEMR APIs:
-  - Technology: OpenEMR's built-in RESTful APIs (PHP-based OpenEMR backend).
-  - Functionality: Provides all backend functionalities including data access (CRUD operations), authentication, authorization, business logic, and integration with the OpenEMR database.
+- our_backend_service APIs:
+  - Technology: our_backend_service's built-in RESTful APIs (PHP-based our_backend_service backend).
+  - Functionality: Provides all backend functionalities including data access (CRUD operations), authentication, authorization, business logic, and integration with the our_backend_service database.
   - API Endpoints: Provides endpoints for patient management, appointment management, pharmacy, billing, user management, reporting, and other functionalities as detailed in section 5.
 - Database:
-  - Technology: MySQL/MariaDB (as required by OpenEMR). PostgreSQL could be used for custom microservices if needed, but primarily MySQL/MariaDB for OpenEMR data.
-  - Functionality: Stores all hospital data including patient records, appointments, medications, user information, billing details, and system configurations. Managed by OpenEMR. No custom schema required beyond what OpenEMR provides unless extending with custom microservices and PostgreSQL.
+  - Technology: MySQL/MariaDB (as required by our_backend_service). PostgreSQL could be used for custom microservices if needed, but primarily MySQL/MariaDB for our_backend_service data.
+  - Functionality: Stores all hospital data including patient records, appointments, medications, user information, billing details, and system configurations. Managed by our_backend_service. No custom schema required beyond what our_backend_service provides unless extending with custom microservices and PostgreSQL.
 - Infrastructure & Deployment:
   - Containerization: Docker and Docker Compose for development and potentially for deployment. Kubernetes or Docker Swarm for production orchestration (for scalability and high availability if needed, otherwise simpler hosting on VMs might suffice).
   - Reverse Proxy & Load Balancer: Nginx for routing requests, load balancing, and SSL termination.
@@ -229,16 +229,16 @@ Technology Stack (Detailed)
         *   Testing: Jest and React Testing Library
 
     Backend (API Proxy & Custom Services if needed):
-        *   Core EMR Backend: OpenEMR (Open Source PHP-based EMR)
-        *   Database: MySQL/MariaDB (OpenEMR Requirement)
+        *   Core EMR Backend: our_backend_service (Open Source PHP-based EMR)
+        *   Database: MySQL/MariaDB (our_backend_service Requirement)
         *   Custom API & Services (for extensions, integrations, performance-critical features):
             *   Framework: Node.js with Express.js or NestJS (for more complex backend logic beyond proxying, if required)
             *   Language: TypeScript
-            *   Database (for specific microservices if needed, otherwise extend OpenEMR database): PostgreSQL
+            *   Database (for specific microservices if needed, otherwise extend our_backend_service database): PostgreSQL
             *   Caching: Redis (if custom services require caching)
 
     Database:
-        *   Primary EMR Database: MySQL/MariaDB (as required by OpenEMR)
+        *   Primary EMR Database: MySQL/MariaDB (as required by our_backend_service)
         *   Secondary Database (Optional, for custom services): PostgreSQL (if Node.js services require separate data)
 
     Infrastructure & Deployment: (As described in Detailed Architecture above)
@@ -314,43 +314,43 @@ Styling
 
 Authentication
 
-    *   Mechanism: NextAuth.js integrated with OpenEMR’s authentication API (e.g., POST /api/auth/login, assuming OpenEMR provides such an API endpoint. If not, custom authentication logic interacting with OpenEMR's user database might be needed).
+    *   Mechanism: NextAuth.js integrated with our_backend_service’s authentication API (e.g., POST /api/auth/login, assuming our_backend_service provides such an API endpoint. If not, custom authentication logic interacting with our_backend_service's user database might be needed).
     *   Flow:
         1.  User submits credentials (username/password) via the /login page.
         2.  Frontend sends a POST request to the Next.js API route (proxy) for authentication.
-        3.  Next.js API route proxies the request to OpenEMR's authentication API endpoint.
-        4.  OpenEMR authenticates the user against its user database.
-        5.  Upon successful authentication, OpenEMR returns a token or session ID.
+        3.  Next.js API route proxies the request to our_backend_service's authentication API endpoint.
+        4.  our_backend_service authenticates the user against its user database.
+        5.  Upon successful authentication, our_backend_service returns a token or session ID.
         6.  Next.js API route receives the token and sets it as an HTTP-only cookie in the user's browser for session management and secure authentication. Alternatively, a secure JWT token could be used and stored in cookies or local storage (less secure for sensitive data like session tokens, cookies are generally preferred for session management).
         7.  Frontend receives confirmation of successful login and is redirected to the appropriate dashboard based on user role.
-    *   Password Management: "Forgot Password" feature will utilize OpenEMR’s password reset API if available. If not, a custom password reset flow needs to be implemented, potentially involving email verification and password reset token generation via OpenEMR's backend or custom backend services.
+    *   Password Management: "Forgot Password" feature will utilize our_backend_service’s password reset API if available. If not, a custom password reset flow needs to be implemented, potentially involving email verification and password reset token generation via our_backend_service's backend or custom backend services.
     *   Session Management: HTTP-only cookies for session tokens to enhance security against XSS attacks. Session expiry and renewal strategies to be implemented.
 
 Authorization
 
     *   Role-Based Access Control (RBAC):
-        *   User roles (patient, receptionist, clinician, pharmacist, admin, nurse, billing clerk, MRD staff, etc.) are defined in OpenEMR. Upon successful login, the user's role is fetched from OpenEMR (via API).
+        *   User roles (patient, receptionist, clinician, pharmacist, admin, nurse, billing clerk, MRD staff, etc.) are defined in our_backend_service. Upon successful login, the user's role is fetched from our_backend_service (via API).
         *   Middleware (Next.js middleware or route-specific checks in components) checks the user's role before rendering protected routes and components. If unauthorized, redirect to a /forbidden page or display an error message.
     *   Implementation:
         *   Store user role in session state (accessible in frontend after login).
         *   Frontend components and API proxy routes will check user roles to restrict access to UI elements, functionalities, and API calls.
-        *   Backend (API Proxy) will also perform authorization checks before forwarding requests to OpenEMR APIs, ensuring that users can only access data and functionalities permitted by their roles.
+        *   Backend (API Proxy) will also perform authorization checks before forwarding requests to our_backend_service APIs, ensuring that users can only access data and functionalities permitted by their roles.
         *   Granular permission settings for each role will be configured in the Admin Panel, controlling access to specific modules, features, and data (screen access control).
 
 5. API Interactions
 
-The system relies entirely on OpenEMR APIs for backend operations. The Next.js API routes act as a proxy layer.
+The system relies entirely on our_backend_service APIs for backend operations. The Next.js API routes act as a proxy layer.
 
 General Notes
 
-    *   Proxy Layer: Next.js API routes will forward requests to OpenEMR APIs. Authentication headers (Authorization: Bearer <token> or cookies) will be added in the proxy layer before forwarding requests to OpenEMR.
+    *   Proxy Layer: Next.js API routes will forward requests to our_backend_service APIs. Authentication headers (Authorization: Bearer <token> or cookies) will be added in the proxy layer before forwarding requests to our_backend_service.
     *   Error Handling: Graceful error messages will be displayed to the user for API failures (e.g., 404 Not Found, 500 Internal Server Error, network errors). Frontend will handle errors from API responses and display user-friendly messages. Logging of API errors for debugging and monitoring.
-    *   Validation: Input validation will be performed on the frontend before making API calls to ensure data integrity and reduce errors. Backend (OpenEMR APIs) should also perform server-side validation for security and data consistency.
-    *   Data Transformation: Proxy layer might perform basic data transformation between frontend and OpenEMR API formats if necessary.
-    *   API Rate Limiting: Implement rate limiting in the proxy layer to protect OpenEMR APIs from abuse and excessive requests.
-    *   API Versioning: If OpenEMR API versioning is relevant, the system should be designed to handle API versioning appropriately.
+    *   Validation: Input validation will be performed on the frontend before making API calls to ensure data integrity and reduce errors. Backend (our_backend_service APIs) should also perform server-side validation for security and data consistency.
+    *   Data Transformation: Proxy layer might perform basic data transformation between frontend and our_backend_service API formats if necessary.
+    *   API Rate Limiting: Implement rate limiting in the proxy layer to protect our_backend_service APIs from abuse and excessive requests.
+    *   API Versioning: If our_backend_service API versioning is relevant, the system should be designed to handle API versioning appropriately.
 
-API Endpoints by Functionality (Examples - Actual endpoints depend on OpenEMR documentation and OpenEMR API capabilities. These are illustrative and need to be verified against OpenEMR API documentation)
+API Endpoints by Functionality (Examples - Actual endpoints depend on our_backend_service documentation and our_backend_service API capabilities. These are illustrative and need to be verified against our_backend_service API documentation)
 
     Authentication
         *   POST /api/auth/login: Authenticate user, return session token (or set cookie).
@@ -470,7 +470,7 @@ API Endpoints by Functionality (Examples - Actual endpoints depend on OpenEMR do
       const authToken = session.authToken; // Assuming token is stored in session after login
 
       try {
-        const response = await fetch(`${process.env.OPENEMR_API_URL}/api/patients/${id}`, { // Use env variable for API URL
+        const response = await fetch(`${process.env.our_backend_service_API_URL}/api/patients/${id}`, { // Use env variable for API URL
           method: 'GET',
           headers: {
             Authorization: `Bearer ${authToken}`, // Pass auth token
@@ -483,7 +483,7 @@ API Endpoints by Functionality (Examples - Actual endpoints depend on OpenEMR do
         }
 
         const data = await response.json();
-        res.status(response.status).json(data); // Forward response and status from OpenEMR API
+        res.status(response.status).json(data); // Forward response and status from our_backend_service API
       } catch (error) {
         console.error('Error fetching patient details:', error);
         res.status(500).json({ error: 'Failed to fetch patient details', details: error.message }); // Generic error message
@@ -504,7 +504,7 @@ Features
         *   Pharmacists receive and process prescriptions generated by clinicians.
         *   Dispensing medications based on prescriptions, updating inventory stock automatically when dispensing.
         *   Record dispensing details (patient, medication, quantity dispensed, date, time, dispensing pharmacist).
-        *   Handle prescription refills and renewals (if applicable and supported by OpenEMR API).
+        *   Handle prescription refills and renewals (if applicable and supported by our_backend_service API).
     *   Drug Request Management from Nurse Station:
         *   Pharmacists receive drug requests from nurse stations via /api/drug-requests.
         *   Manage and fulfill drug requests, updating inventory upon fulfillment.
@@ -676,16 +676,16 @@ Features (As described in Overview section, expanded here)
 Measures
 
     *   Data Transmission: Enforce HTTPS for all API calls and frontend access to ensure encrypted communication.
-    *   Authentication: Robust token-based authentication with OpenEMR APIs. Secure session management using HTTP-only cookies. Strong password policies.
+    *   Authentication: Robust token-based authentication with our_backend_service APIs. Secure session management using HTTP-only cookies. Strong password policies.
     *   Authorization: Strictly enforce RBAC at route level, UI component level, and API level. Principle of least privilege for user permissions.
     *   Data Privacy: Implement data access controls to ensure patients access only their own data; clinicians see only authorized patient records; and roles have access only to necessary data. Data encryption at rest and in transit.
-    *   Compliance: Design the system to align with HIPAA (or equivalent healthcare data privacy regulations in the target region). Leverage OpenEMR’s built-in compliance features and implement additional security measures. Audit logs for compliance tracking. Regular security audits and penetration testing.
+    *   Compliance: Design the system to align with HIPAA (or equivalent healthcare data privacy regulations in the target region). Leverage our_backend_service’s built-in compliance features and implement additional security measures. Audit logs for compliance tracking. Regular security audits and penetration testing.
     *   Input Validation and Sanitization: Server-side and client-side input validation to prevent injection attacks. Output encoding to prevent XSS vulnerabilities.
     *   Protection against common web security vulnerabilities: XSS, CSRF, SQL injection, session hijacking, etc.
 
 Best Practices
 
-    *   Avoid exposing OpenEMR API keys or sensitive credentials in the frontend code.
+    *   Avoid exposing our_backend_service API keys or sensitive credentials in the frontend code.
     *   Use environment variables for sensitive configurations (API URLs, API keys, database credentials, etc.). Securely manage environment variables.
     *   Implement comprehensive audit logs for security monitoring and compliance. Regularly review audit logs.
     *   Regular security vulnerability scanning and penetration testing.
@@ -700,7 +700,7 @@ Best Practices
 - Data Fetching: Use React Query or SWR for frontend data caching and revalidation to reduce redundant API calls and improve perceived performance. Caching strategies for frequently accessed data.
 - Large Datasets: Implement pagination or lazy loading for lists of patients, appointments, inventory, and other large datasets to improve initial loading time and reduce server load. Server-side pagination for API responses.
 - Rendering: Leverage Next.js server components for static content and server-side rendering for initial page load performance. Use client components for interactive parts of the UI. Optimize React component rendering and avoid unnecessary re-renders. Code splitting to reduce initial bundle size.
-- Database Optimization: Ensure OpenEMR database is properly indexed and optimized for performance. Optimize database queries used by OpenEMR APIs. Database connection pooling.
+- Database Optimization: Ensure our_backend_service database is properly indexed and optimized for performance. Optimize database queries used by our_backend_service APIs. Database connection pooling.
 - Load Balancing: Use load balancers (Nginx) to distribute traffic across multiple application server instances for scalability and high availability.
 - CDN: Utilize a Content Delivery Network (Cloudflare) to serve static assets (JavaScript, CSS, images) from geographically closer locations to users, reducing latency.
 - Code Optimization: Optimize frontend and backend code for performance. Profile application performance and identify bottlenecks. Optimize API calls and data processing.
@@ -709,7 +709,7 @@ Best Practices
 12. Testing
 
 - Unit Tests: Use Jest and React Testing Library to write unit tests for individual frontend components, utility functions, and backend logic (if any custom backend services are developed). Focus on testing component logic, UI rendering, and function behavior in isolation.
-- Integration Tests: Verify API interactions by mocking OpenEMR API responses using tools like MSW (Mock Service Worker) or Cypress for API mocking. Test the integration between frontend components and API proxy routes. Test data flow between frontend and backend. Verify error handling and API response parsing.
+- Integration Tests: Verify API interactions by mocking our_backend_service API responses using tools like MSW (Mock Service Worker) or Cypress for API mocking. Test the integration between frontend components and API proxy routes. Test data flow between frontend and backend. Verify error handling and API response parsing.
 - End-to-End Tests: Use Cypress or similar E2E testing frameworks to simulate user workflows from login to performing key functionalities (e.g., login → schedule appointment → view appointment, patient registration → patient search → view patient details, etc.). Test user interface interactions, navigation, data persistence, and overall system workflow. Test across different browsers and devices.
 - Test Coverage: Aim for reasonable test coverage across frontend and backend code. Focus on testing critical functionalities and user workflows.
 - Automated Testing: Integrate tests into the CI/CD pipeline for automated testing on code changes. Run unit tests, integration tests, and E2E tests automatically.
@@ -719,12 +719,12 @@ Best Practices
 
 13. Deployment
 
-- Platform: Vercel, Netlify, AWS, GCP, Azure, or similar platforms for hosting Next.js frontend and backend (API proxy). Cloud provider platforms (AWS, GCP, Azure) for hosting OpenEMR infrastructure (if self-hosting OpenEMR) or using cloud-managed OpenEMR services if available.
-- Configuration: Set up environment variables for all configurations: OPENEMR_API_URL, API keys/tokens (if needed for proxy to OpenEMR), database connection strings (if custom services with separate DB), authentication secrets, etc. Securely manage environment variables (using cloud provider secrets management services or secure configuration management tools).
+- Platform: Vercel, Netlify, AWS, GCP, Azure, or similar platforms for hosting Next.js frontend and backend (API proxy). Cloud provider platforms (AWS, GCP, Azure) for hosting our_backend_service infrastructure (if self-hosting our_backend_service) or using cloud-managed our_backend_service services if available.
+- Configuration: Set up environment variables for all configurations: our_backend_service_API_URL, API keys/tokens (if needed for proxy to our_backend_service), database connection strings (if custom services with separate DB), authentication secrets, etc. Securely manage environment variables (using cloud provider secrets management services or secure configuration management tools).
 - Infrastructure: Secure server infrastructure with SSL/TLS certificates (Let's Encrypt or cloud provider certificate manager), firewall rules to restrict access to necessary ports and services, and proper access controls (IAM roles, security groups) to manage access to infrastructure resources. Regular security patching of servers and infrastructure components.
 - Deployment Process: Implement a CI/CD pipeline for automated build, test, and deployment process. Use Git for version control and code repository. Automated deployments to staging and production environments. Rollback strategy in case of deployment failures. Monitoring of application and infrastructure post-deployment.
 - Scalability: Design deployment architecture for scalability. Use containerization (Docker), orchestration (Kubernetes or Docker Swarm), load balancing, and horizontally scalable application servers and databases to handle increasing user load and data volume. Plan for horizontal scaling if needed in the future.
 - Monitoring and Logging: Implement comprehensive monitoring and logging in production environment. Use monitoring tools (Prometheus, Grafana, cloud provider monitoring) to track application and infrastructure metrics. Centralized logging (ELK stack or cloud provider logging services) for application logs, server logs, and access logs. Alerting and notifications for critical system issues and errors.
 - Disaster Recovery: Implement a disaster recovery plan and business continuity plan. Regular data backups, offsite backups, and procedures for restoring system from backups in case of failures. Redundancy and high availability setup to minimize downtime. Disaster recovery drills and testing.
 
-This TDD provides a comprehensive technical design for the Hospital Management Website. It is detailed enough to serve as a blueprint for development, covering all key aspects from frontend to backend, infrastructure, security, testing, and deployment. Remember to adapt and refine this TDD based on specific project requirements, OpenEMR API documentation, and evolving needs during development. Continuous review and updates to the TDD are recommended throughout the project lifecycle.
+This TDD provides a comprehensive technical design for the Hospital Management Website. It is detailed enough to serve as a blueprint for development, covering all key aspects from frontend to backend, infrastructure, security, testing, and deployment. Remember to adapt and refine this TDD based on specific project requirements, our_backend_service API documentation, and evolving needs during development. Continuous review and updates to the TDD are recommended throughout the project lifecycle.
