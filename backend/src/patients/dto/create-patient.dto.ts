@@ -1,0 +1,98 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+    IsDateString,
+    IsInt,
+    IsOptional,
+    IsString,
+    Min,
+    ValidateNested
+} from 'class-validator';
+import { ContactDto } from './contact.dto';
+
+export class CreatePatientDto {
+    @ApiProperty({
+        description: 'User ID to link (optional)',
+        example: '550e8400-e29b-41d4-a716-446655440000',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    user_id?: string;
+
+    @ApiProperty({
+        description: 'First name',
+        example: 'John',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(100)
+    first_name?: string;
+
+    @ApiProperty({
+        description: 'Last name',
+        example: 'Doe',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(100)
+    last_name?: string;
+
+    @ApiProperty({
+        description: 'Gender concept ID (e.g., 8507 for male, 8532 for female)',
+        example: 8507,
+    })
+    @IsInt()
+    @Min(1)
+    gender_concept_id: number;
+
+    @ApiProperty({
+        description: 'Date of birth (YYYY-MM-DD)',
+        example: '1980-05-15',
+    })
+    @IsDateString()
+    dob: string;
+
+    @ApiProperty({
+        description: 'Race concept ID',
+        example: 8527,
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    race_concept_id?: number;
+
+    @ApiProperty({
+        description: 'Ethnicity concept ID',
+        example: 38003564,
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    ethnicity_concept_id?: number;
+
+    @ApiProperty({
+        description: 'Person source value',
+        example: 'imported',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(100)
+    person_source_value?: string;
+
+    @ApiProperty({
+        description: 'Contact information',
+        type: ContactDto,
+        required: false,
+    })
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => ContactDto)
+    contact?: ContactDto;
+}
+

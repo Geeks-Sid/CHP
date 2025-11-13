@@ -222,14 +222,130 @@ PATCH /api/v1/users/:id
 }
 ```
 
+## Phase 4: Patients Management ✅ COMPLETED
+
+### Completed Tasks
+
+- [x] **Person Repository** (Task 39)
+  - ✅ Insert person with MRN generation
+  - ✅ Update person by person_id
+  - ✅ Optional link to users table
+  - ✅ Search by name/DOB/gender
+  - ✅ Cursor-based pagination
+  - ✅ Advisory lock for MRN generation (prevents race conditions)
+
+- [x] **Person Service** (Task 41)
+  - ✅ MRN generation using advisory lock
+  - ✅ Deterministic format: `MRN-YYYY-NNNNNN`
+  - ✅ DOB validation (no future dates, reasonable past limit)
+  - ✅ Business logic for patient operations
+
+- [x] **Person Controller** (Task 40)
+  - ✅ POST `/api/v1/patients` - Create patient
+  - ✅ GET `/api/v1/patients` - Search patients with filters
+  - ✅ GET `/api/v1/patients/:person_id` - Get patient by ID
+  - ✅ GET `/api/v1/patients/mrn/:mrn` - Get patient by MRN
+  - ✅ PATCH `/api/v1/patients/:person_id` - Update patient
+  - ✅ All endpoints protected with RBAC
+
+### Files Created
+
+**Repository:**
+- `src/patients/patients.repository.ts` - Database operations with advisory locks
+
+**Service:**
+- `src/patients/patients.service.ts` - Business logic and validation
+
+**Controller:**
+- `src/patients/patients.controller.ts` - REST endpoints with RBAC
+
+**DTOs:**
+- `src/patients/dto/create-patient.dto.ts` - Patient creation validation
+- `src/patients/dto/update-patient.dto.ts` - Patient update validation
+- `src/patients/dto/patient-response.dto.ts` - Response DTOs
+- `src/patients/dto/contact.dto.ts` - Contact information validation
+
+**Module:**
+- `src/patients/patients.module.ts` - Patients module configuration
+
+### Features Implemented
+
+1. ✅ **MRN Generation**: Advisory lock prevents race conditions
+2. ✅ **MRN Format**: `MRN-YYYY-NNNNNN` (e.g., MRN-2024-000123)
+3. ✅ **Transaction Safety**: All write operations use transactions
+4. ✅ **DOB Validation**: No future dates, reasonable past limit (150 years)
+5. ✅ **Search Functionality**: Search by name (uses GIN index) or MRN
+6. ✅ **Filtering**: Filter by DOB, gender concept ID
+7. ✅ **Cursor Pagination**: Efficient pagination for large datasets
+8. ✅ **User Linking**: Optional link to users table (one-to-one)
+9. ✅ **RBAC Protection**: All endpoints require appropriate permissions
+10. ✅ **Input Validation**: Comprehensive DTO validation
+
+### API Endpoints
+
+- `GET /api/v1/patients` - Search patients (requires `patient.read`)
+- `POST /api/v1/patients` - Create patient (requires `patient.create`)
+- `GET /api/v1/patients/:person_id` - Get patient by ID (requires `patient.read`)
+- `GET /api/v1/patients/mrn/:mrn` - Get patient by MRN (requires `patient.read`)
+- `PATCH /api/v1/patients/:person_id` - Update patient (requires `patient.update`)
+
+### Query Parameters
+
+**Search Patients:**
+- `limit` - Items per page (max 100, default 20)
+- `cursor` - Pagination cursor (base64 encoded)
+- `search` - Search by name or MRN (case-insensitive, uses GIN index)
+- `dob` - Filter by date of birth (YYYY-MM-DD)
+- `gender_concept_id` - Filter by gender concept ID
+
+### MRN Generation
+
+- **Format**: `MRN-YYYY-NNNNNN`
+- **Example**: `MRN-2024-000123`
+- **Security**: Uses PostgreSQL advisory locks to prevent race conditions
+- **Uniqueness**: Guaranteed by database sequence and lock mechanism
+
+### Usage Example
+
+```typescript
+// Create patient
+POST /api/v1/patients
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "gender_concept_id": 8507,
+  "dob": "1980-05-15",
+  "race_concept_id": 8527,
+  "contact": {
+    "phone": "+1234567890",
+    "email": "john@example.com"
+  }
+}
+
+// Search patients
+GET /api/v1/patients?search=John&limit=20
+
+// Get by MRN
+GET /api/v1/patients/mrn/MRN-2024-000123
+
+// Update patient
+PATCH /api/v1/patients/123
+{
+  "first_name": "Jane",
+  "contact": {
+    "email": "jane@example.com"
+  }
+}
+```
+
 ### Next Steps
 
-**Phase 4: Patients Management**
-- Person repository
-- MRN generation with advisory locks
-- Patients controller (CRUD + search)
+**Phase 5: Visits Management**
+- Visit repository
+- Visit service (overlap prevention)
+- Visit controller (CRUD + filters)
 
-See `.temp/chunk-04-patients.md` for detailed breakdown.
+See `.temp/chunk-05-visits.md` for detailed breakdown.
 
 ### Testing
 
