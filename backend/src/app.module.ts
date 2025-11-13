@@ -10,6 +10,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
 import { ProceduresModule } from './procedures/procedures.module';
+import { TerminologyModule } from './terminology/terminology.module';
 import { UsersModule } from './users/users.module';
 import { VisitsModule } from './visits/visits.module';
 
@@ -36,6 +37,7 @@ import { VisitsModule } from './visits/visits.module';
     ProceduresModule,
     MedicationsModule,
     DocumentsModule,
+    TerminologyModule,
   ],
   providers: [
     {
