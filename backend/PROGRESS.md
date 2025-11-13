@@ -338,14 +338,134 @@ PATCH /api/v1/patients/123
 }
 ```
 
+## Phase 5: Visits Management ✅ COMPLETED
+
+### Completed Tasks
+
+- [x] **Visit Repository** (Task 42)
+  - ✅ Create visit (atomic) with generated visit_number
+  - ✅ Visit number format: `V-YYYY-NNNNNN`
+  - ✅ Advisory lock for visit number generation (prevents race conditions)
+  - ✅ Link to person and provider
+  - ✅ Overlap detection for inpatient visits
+
+- [x] **Visit Service** (Task 44)
+  - ✅ Prevent overlapping inpatient visits
+  - ✅ Date validation (end cannot be before start)
+  - ✅ Business logic validation
+  - ✅ Active inpatient visit queries
+
+- [x] **Visit Controller** (Task 43)
+  - ✅ POST `/api/v1/visits` - Create visit
+  - ✅ GET `/api/v1/visits` - List with cursor pagination
+  - ✅ GET `/api/v1/visits/:id` - Get visit by ID
+  - ✅ GET `/api/v1/visits/visit-number/:visit_number` - Get by visit number
+  - ✅ GET `/api/v1/visits/active-inpatient/:person_id` - Get active IPD visits
+  - ✅ PATCH `/api/v1/visits/:id` - Update visit
+  - ✅ All endpoints protected with RBAC
+
+### Files Created
+
+**Repository:**
+- `src/visits/visits.repository.ts` - Database operations with advisory locks
+
+**Service:**
+- `src/visits/visits.service.ts` - Business logic and overlap prevention
+
+**Controller:**
+- `src/visits/visits.controller.ts` - REST endpoints with RBAC
+
+**DTOs:**
+- `src/visits/dto/create-visit.dto.ts` - Visit creation validation
+- `src/visits/dto/update-visit.dto.ts` - Visit update validation
+- `src/visits/dto/visit-response.dto.ts` - Response DTOs
+
+**Module:**
+- `src/visits/visits.module.ts` - Visits module configuration
+
+### Features Implemented
+
+1. ✅ **Visit Number Generation**: Advisory lock prevents race conditions
+2. ✅ **Visit Number Format**: `V-YYYY-NNNNNN` (e.g., V-2024-000987)
+3. ✅ **Overlap Prevention**: Cannot create overlapping IPD visits for same patient
+4. ✅ **Transaction Safety**: All write operations use transactions
+5. ✅ **Date Validation**: End date cannot be before start date
+6. ✅ **Filtering**: Filter by person, provider, type, date range
+7. ✅ **Cursor Pagination**: Efficient pagination for large datasets
+8. ✅ **Active Visits Query**: Get active inpatient visits for a patient
+9. ✅ **RBAC Protection**: All endpoints require appropriate permissions
+10. ✅ **Input Validation**: Comprehensive DTO validation
+
+### API Endpoints
+
+- `GET /api/v1/visits` - Search visits (requires `visit.read`)
+- `POST /api/v1/visits` - Create visit (requires `visit.create`)
+- `GET /api/v1/visits/:id` - Get visit by ID (requires `visit.read`)
+- `GET /api/v1/visits/visit-number/:visit_number` - Get by visit number (requires `visit.read`)
+- `GET /api/v1/visits/active-inpatient/:person_id` - Get active IPD visits (requires `visit.read`)
+- `PATCH /api/v1/visits/:id` - Update visit (requires `visit.update`)
+
+### Query Parameters
+
+**Search Visits:**
+- `limit` - Items per page (max 100, default 20)
+- `cursor` - Pagination cursor (base64 encoded)
+- `person_id` - Filter by patient ID
+- `provider_id` - Filter by provider UUID
+- `type` - Filter by visit type (OPD, IPD, ER)
+- `date_from` - Filter visits from date (ISO 8601)
+- `date_to` - Filter visits to date (ISO 8601)
+
+### Visit Number Generation
+
+- **Format**: `V-YYYY-NNNNNN`
+- **Example**: `V-2024-000987`
+- **Security**: Uses PostgreSQL advisory locks to prevent race conditions
+- **Uniqueness**: Guaranteed by database sequence and lock mechanism
+
+### Overlap Prevention
+
+- **IPD Visits**: Cannot create overlapping inpatient visits for the same patient
+- **Validation**: Checks for active IPD visits (visit_end IS NULL) or overlapping date ranges
+- **Error**: Returns 409 Conflict if overlap detected
+
+### Usage Example
+
+```typescript
+// Create visit
+POST /api/v1/visits
+{
+  "person_id": 123,
+  "visit_concept_id": 9201,
+  "visit_type": "OPD",
+  "visit_start": "2024-01-15T10:00:00Z",
+  "visit_end": "2024-01-15T11:00:00Z",
+  "department_id": 5,
+  "provider_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reason": "Routine checkup"
+}
+
+// Search visits
+GET /api/v1/visits?person_id=123&type=IPD&date_from=2024-01-01
+
+// Get active inpatient visits
+GET /api/v1/visits/active-inpatient/123
+
+// Update visit (close it)
+PATCH /api/v1/visits/987
+{
+  "visit_end": "2024-01-15T12:00:00Z"
+}
+```
+
 ### Next Steps
 
-**Phase 5: Visits Management**
-- Visit repository
-- Visit service (overlap prevention)
-- Visit controller (CRUD + filters)
+**Phase 6: Procedures & Medications**
+- Procedures repository & controller
+- Medications repository & controller
+- Concept validation
 
-See `.temp/chunk-05-visits.md` for detailed breakdown.
+See `.temp/chunk-06-procedures-medications.md` for detailed breakdown.
 
 ### Testing
 

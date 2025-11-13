@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { PatientsModule } from './patients/patients.module';
 import { UsersModule } from './users/users.module';
+import { VisitsModule } from './visits/visits.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     PatientsModule,
+    VisitsModule,
   ],
   providers: [
     {
