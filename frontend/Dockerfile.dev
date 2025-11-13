@@ -1,0 +1,18 @@
+# Development Dockerfile for Frontend
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies
+RUN npm install
+
+# Expose port
+EXPOSE 8080
+
+# Start development server with hot reload
+# Note: Source code is mounted as volume, so we don't COPY it here
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8080"]
+

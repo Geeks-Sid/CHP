@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: hospital-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hospital}
+      POSTGRES_USER: ${POSTGRES_USER:-hospital}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hospital}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hospital-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hospital-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hospital-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: hospital-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - hospital-network
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: hospital-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-hospital}
+      PGUSER: ${POSTGRES_USER:-hospital}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minio}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      S3_BUCKET: documents
+      JWT_SECRET: ${JWT_SECRET:-replace-me-with-secure-secret-key-min-32-chars-for-development}
+      CORS_ORIGIN: "*"
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hospital-network
+    command: npm run start:dev
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: hospital-frontend
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-3000}
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_cache:/app/node_modules/.vite
+    depends_on:
+      - backend
+    networks:
+      - hospital-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:
+  backend_logs:
+  frontend_cache:
+
+networks:
+  hospital-network:
+    driver: bridge
+
