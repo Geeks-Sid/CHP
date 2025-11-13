@@ -7,6 +7,7 @@ import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { DocumentsModule } from './documents/documents.module';
+import { SecurityModule } from './security/security.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
 import { FhirModule } from './fhir/fhir.module';
@@ -32,6 +33,7 @@ import { VisitsModule } from './visits/visits.module';
     ]),
     DatabaseModule,
     HealthModule,
+    SecurityModule,
     AuthModule,
     UsersModule,
     PatientsModule,

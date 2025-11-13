@@ -31,6 +31,15 @@ const configSchema = z.object({
   REDIS_HOST: z.string().optional(),
   REDIS_PORT: z.coerce.number().optional(),
   REDIS_PASSWORD: z.string().optional(),
+
+  // Security
+  MAX_PAYLOAD_SIZE: z.coerce.number().optional(),
+  AUDIT_READ_SAMPLE_RATE: z.coerce.number().optional(),
+
+  // Vault/Secrets Manager (optional)
+  VAULT_ENABLED: z.string().optional(),
+  VAULT_URL: z.string().optional(),
+  VAULT_TOKEN: z.string().optional(),
 });
 
 export type Configuration = z.infer<typeof configSchema>;

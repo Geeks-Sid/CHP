@@ -10,8 +10,29 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
-        new FastifyAdapter({ logger: false }),
+        new FastifyAdapter({
+            logger: false,
+            bodyLimit: parseInt(process.env.MAX_PAYLOAD_SIZE || '1048576', 10), // 1MB default
+        }),
     );
+
+    // Configure Fastify JSON parser to prevent prototype pollution
+    const fastifyInstance = app.getHttpAdapter().getInstance();
+    fastifyInstance.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
+        try {
+            // Parse JSON with reviver to prevent prototype pollution
+            const json = JSON.parse(body as string, (key, value) => {
+                // Prevent prototype pollution by blocking __proto__ and constructor
+                if (key === '__proto__' || key === 'constructor') {
+                    throw new Error('Prototype pollution attempt detected');
+                }
+                return value;
+            });
+            done(null, json);
+        } catch (error: any) {
+            done(error, undefined);
+        }
+    });
 
     // Swagger/OpenAPI documentation
     if (process.env.NODE_ENV !== 'production') {
