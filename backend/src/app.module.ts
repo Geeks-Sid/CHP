@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { configuration } from './config/configuration';
 
 @Module({
@@ -24,6 +25,7 @@ import { configuration } from './config/configuration';
     DatabaseModule,
     HealthModule,
     AuthModule,
+    UsersModule,
   ],
   providers: [
     {

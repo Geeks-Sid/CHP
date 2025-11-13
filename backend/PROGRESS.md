@@ -111,16 +111,125 @@ export class UsersController {
 }
 ```
 
+## Phase 3: Users Management ✅ COMPLETED
+
+### Completed Tasks
+
+- [x] **Users Repository** (Task 35)
+  - ✅ CRUD operations with transactions
+  - ✅ Unique username/email checks
+  - ✅ Soft delete support (deactivate)
+  - ✅ Hard delete option
+  - ✅ Cursor-based pagination
+  - ✅ Filtering by role, active status, search
+  - ✅ Role management
+
+- [x] **Users Service** (Task 37)
+  - ✅ Enforce role/permission checks
+  - ✅ Email uniqueness rules
+  - ✅ Password strength validation
+  - ✅ Common password detection
+  - ✅ Business logic for user operations
+
+- [x] **Users Controller** (Task 36)
+  - ✅ GET `/api/v1/users` - List with pagination & filters
+  - ✅ POST `/api/v1/users` - Create user
+  - ✅ GET `/api/v1/users/:id` - Get user
+  - ✅ PATCH `/api/v1/users/:id` - Update user
+  - ✅ DELETE `/api/v1/users/:id` - Delete user (soft/hard)
+  - ✅ GET `/api/v1/users/roles` - Get all roles
+  - ✅ All endpoints protected with RBAC
+
+- [x] **DTO Validation** (Task 38)
+  - ✅ CreateUserDto with class-validator
+  - ✅ UpdateUserDto with class-validator
+  - ✅ Strong constraints (username format, email, password)
+  - ✅ Role validation
+
+### Files Created
+
+**Repository:**
+- `src/users/users.repository.ts` - Database operations with transactions
+
+**Service:**
+- `src/users/users.service.ts` - Business logic and validation
+
+**Controller:**
+- `src/users/users.controller.ts` - REST endpoints with RBAC
+
+**DTOs:**
+- `src/users/dto/create-user.dto.ts` - User creation validation
+- `src/users/dto/update-user.dto.ts` - User update validation
+- `src/users/dto/user-response.dto.ts` - Response DTOs
+
+**Module:**
+- `src/users/users.module.ts` - Users module configuration
+
+### Features Implemented
+
+1. ✅ **Transaction Safety**: All write operations use transactions
+2. ✅ **Uniqueness Enforcement**: Username and email uniqueness checks
+3. ✅ **Password Security**: Password strength validation on create/update
+4. ✅ **Soft Delete**: Users can be deactivated instead of deleted
+5. ✅ **Cursor Pagination**: Efficient pagination for large datasets
+6. ✅ **Filtering**: Filter by role, active status, or search term
+7. ✅ **Role Management**: Assign/update user roles
+8. ✅ **RBAC Protection**: All endpoints require appropriate permissions
+9. ✅ **Input Validation**: Comprehensive DTO validation
+10. ✅ **Error Handling**: Proper HTTP status codes and error messages
+
+### API Endpoints
+
+- `GET /api/v1/users` - List users (requires `user.read`)
+- `POST /api/v1/users` - Create user (requires `user.create`)
+- `GET /api/v1/users/roles` - Get all roles (requires `user.read`)
+- `GET /api/v1/users/:id` - Get user (requires `user.read`)
+- `PATCH /api/v1/users/:id` - Update user (requires `user.update`)
+- `DELETE /api/v1/users/:id` - Delete user (requires `user.delete`)
+
+### Query Parameters
+
+**List Users:**
+- `limit` - Items per page (max 100, default 20)
+- `cursor` - Pagination cursor (base64 encoded)
+- `role` - Filter by role name
+- `active` - Filter by active status (true/false)
+- `search` - Search username or email (case-insensitive)
+
+**Delete User:**
+- `hard` - Hard delete if true (default: soft delete/deactivate)
+
+### Usage Example
+
+```typescript
+// Create user
+POST /api/v1/users
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "SecurePass123!",
+  "role_ids": [2, 3] // Doctor, Nurse
+}
+
+// List users with filters
+GET /api/v1/users?role=Doctor&active=true&limit=20
+
+// Update user
+PATCH /api/v1/users/:id
+{
+  "email": "newemail@example.com",
+  "active": false
+}
+```
+
 ### Next Steps
 
-**Phase 3: Users Management**
-- Users repository
-- Users service
-- Users controller (CRUD)
-- DTO validation
-- Permissions seeding script
+**Phase 4: Patients Management**
+- Person repository
+- MRN generation with advisory locks
+- Patients controller (CRUD + search)
 
-See `.temp/chunk-03-users.md` for detailed breakdown.
+See `.temp/chunk-04-patients.md` for detailed breakdown.
 
 ### Testing
 
