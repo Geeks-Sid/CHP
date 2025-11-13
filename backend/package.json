@@ -23,7 +23,8 @@
         "test:security": "jest --testPathPattern=security",
         "migrate:dev": "node scripts/migrate.js",
         "openapi:generate": "node -e \"require('fs').writeFileSync('openapi.json', JSON.stringify(require('./dist/main').default, null, 2))\"",
-        "openapi:validate": "npx @stoplight/spectral-cli lint openapi.json || echo 'OpenAPI validation - install @stoplight/spectral-cli for full validation'"
+        "openapi:validate": "npx @stoplight/spectral-cli lint openapi.json || echo 'OpenAPI validation - install @stoplight/spectral-cli for full validation'",
+        "db:generate-sample-data": "ts-node -r tsconfig-paths/register ../database/scripts/generate-sample-data.ts"
     },
     "dependencies": {
         "@nestjs/common": "^10.3.0",
