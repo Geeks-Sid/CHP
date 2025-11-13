@@ -8,6 +8,8 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { DocumentsModule } from './documents/documents.module';
 import { SecurityModule } from './security/security.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
+import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
 import { FhirModule } from './fhir/fhir.module';
@@ -34,6 +36,8 @@ import { VisitsModule } from './visits/visits.module';
     DatabaseModule,
     HealthModule,
     SecurityModule,
+    TelemetryModule,
+    FeatureFlagsModule,
     AuthModule,
     UsersModule,
     PatientsModule,

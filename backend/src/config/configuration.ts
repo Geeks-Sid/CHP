@@ -40,6 +40,14 @@ const configSchema = z.object({
   VAULT_ENABLED: z.string().optional(),
   VAULT_URL: z.string().optional(),
   VAULT_TOKEN: z.string().optional(),
+
+  // Feature Flags
+  FHIR_WRITE_ENABLED: z.string().optional(),
+  EXTERNAL_TERMINOLOGY_ENABLED: z.string().optional(),
+  MULTI_TENANT_ENABLED: z.string().optional(),
+  AUDIT_ENABLED: z.string().optional(),
+  DOCUMENTS_UPLOAD_ENABLED: z.string().optional(),
+  REPORTS_ENABLED: z.string().optional(),
 });
 
 export type Configuration = z.infer<typeof configSchema>;
