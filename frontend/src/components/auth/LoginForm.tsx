@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { LockIcon, MailIcon, UserIcon, PillIcon, PackageIcon } from 'lucide-react';
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPending, setIsPending] = useState(false);
   const { login } = useAuth();
@@ -19,11 +19,11 @@ const LoginForm = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    if (!username || !password) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter both email and password"
+        description: "Please enter both username and password"
       });
       return;
     }
@@ -31,17 +31,18 @@ const LoginForm = () => {
     setIsPending(true);
 
     try {
-      await login(email, password);
+      await login(username, password);
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in."
       });
       navigate('/dashboard');
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid credentials. Please try again.';
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Invalid credentials. Please try again."
+        description: errorMessage
       });
     } finally {
       setIsPending(false);
@@ -52,23 +53,23 @@ const LoginForm = () => {
   const handleDemoLogin = (role: string) => {
     switch (role) {
       case 'patient':
-        setEmail('patient@example.com');
+        setUsername('patient@example.com');
         setPassword('password');
         break;
       case 'receptionist':
-        setEmail('receptionist@example.com');
+        setUsername('receptionist@example.com');
         setPassword('password');
         break;
       case 'clinician':
-        setEmail('clinician@example.com');
+        setUsername('clinician@example.com');
         setPassword('password');
         break;
       case 'pharmacy':
-        setEmail('pharmacy@example.com');
+        setUsername('pharmacy@example.com');
         setPassword('password');
         break;
       case 'warehousemanager':
-        setEmail('warehouse@example.com');
+        setUsername('warehouse@example.com');
         setPassword('password');
         break;
     }
@@ -86,10 +87,10 @@ const LoginForm = () => {
             <div className="relative">
               <MailIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                placeholder="Username or Email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="pl-10"
                 required
               />

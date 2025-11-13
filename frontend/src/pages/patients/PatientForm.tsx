@@ -1,12 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -15,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -23,140 +18,153 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useNavigate, useParams } from 'react-router-dom';
+import * as z from 'zod';
 
-// Mock patient data
-const mockPatients = {
-  '1': {
-    id: '1',
-    name: 'John Smith',
-    dob: '1980-05-15',
-    email: 'john@example.com',
-    phone: '(555) 123-4567',
-    address: '123 Main St, Anytown, CA 12345',
-    gender: 'Male',
-    insurance: 'Blue Cross Blue Shield',
-    policyNumber: 'BC123456789',
-    emergencyContact: 'Mary Smith',
-    emergencyPhone: '(555) 987-6543',
-    notes: 'Patient has a history of hypertension.',
-  },
-  // Add more patients as needed
-};
-
-// Form validation schema
+// Form validation schema matching backend DTO
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  dob: z.string().nonempty({ message: 'Date of birth is required.' }),
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
-  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  address: z.string().min(5, { message: 'Address must be at least 5 characters.' }),
-  gender: z.enum(['Male', 'Female', 'Other']),
-  insurance: z.string().min(2, { message: 'Insurance provider is required.' }),
-  policyNumber: z.string().min(5, { message: 'Policy number is required.' }),
-  emergencyContact: z.string().min(2, { message: 'Emergency contact name is required.' }),
-  emergencyPhone: z.string().min(10, { message: 'Emergency phone must be at least 10 digits.' }),
-  notes: z.string().optional(),
+  first_name: z.string().min(1, { message: 'First name is required.' }).max(100),
+  last_name: z.string().min(1, { message: 'Last name is required.' }).max(100),
+  dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format.' }),
+  gender_concept_id: z.number().min(1),
+  phone: z.string().optional(),
+  email: z.string().email({ message: 'Please enter a valid email address.' }).optional().or(z.literal('')),
+  race_concept_id: z.number().optional(),
+  ethnicity_concept_id: z.number().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Gender options (OMOP concept IDs)
+const GENDER_OPTIONS = [
+  { value: 8507, label: 'Male' },
+  { value: 8532, label: 'Female' },
+];
 
 const PatientForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!id;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
+      first_name: '',
+      last_name: '',
       dob: '',
-      email: '',
+      gender_concept_id: 8507,
       phone: '',
-      address: '',
-      gender: 'Male',
-      insurance: '',
-      policyNumber: '',
-      emergencyContact: '',
-      emergencyPhone: '',
-      notes: '',
+      email: '',
+      race_concept_id: undefined,
+      ethnicity_concept_id: undefined,
     },
   });
 
-  useEffect(() => {
-    if (isEditMode) {
-      // Fetch patient data for editing
-      const fetchPatient = async () => {
-        setIsLoading(true);
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          if (id && mockPatients[id as keyof typeof mockPatients]) {
-            const patient = mockPatients[id as keyof typeof mockPatients];
-            form.reset({
-              name: patient.name,
-              dob: patient.dob,
-              email: patient.email,
-              phone: patient.phone,
-              address: patient.address,
-              gender: patient.gender as 'Male' | 'Female' | 'Other',
-              insurance: patient.insurance,
-              policyNumber: patient.policyNumber,
-              emergencyContact: patient.emergencyContact,
-              emergencyPhone: patient.emergencyPhone,
-              notes: patient.notes,
-            });
-          } else {
-            toast({
-              variant: 'destructive',
-              title: 'Patient not found',
-              description: 'The requested patient does not exist.'
-            });
-            navigate('/patients');
-          }
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'There was a problem loading the patient data.'
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
+  // Fetch patient data if editing
+  const { data: patientData, isLoading } = useQuery({
+    queryKey: ['patient', id],
+    queryFn: async () => {
+      if (!id) return null;
+      return apiClient.get(`/patients/${id}`);
+    },
+    enabled: isEditMode && !!id,
+  });
 
-      fetchPatient();
+  // Populate form when patient data is loaded
+  useEffect(() => {
+    if (patientData && isEditMode) {
+      const dob = patientData.year_of_birth && patientData.month_of_birth && patientData.day_of_birth
+        ? `${patientData.year_of_birth}-${String(patientData.month_of_birth).padStart(2, '0')}-${String(patientData.day_of_birth).padStart(2, '0')}`
+        : '';
+
+      form.reset({
+        first_name: patientData.first_name || '',
+        last_name: patientData.last_name || '',
+        dob,
+        gender_concept_id: patientData.gender_concept_id || 8507,
+        phone: patientData.contact?.phone || '',
+        email: patientData.contact?.email || '',
+        race_concept_id: patientData.race_concept_id,
+        ethnicity_concept_id: patientData.ethnicity_concept_id,
+      });
     }
-  }, [id, navigate, toast, form]);
+  }, [patientData, isEditMode, form]);
 
   const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
-    
+    setIsSubmitting(true);
+
     try {
-      // Simulate API call to save patient data
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: isEditMode ? 'Patient updated' : 'Patient created',
-        description: isEditMode 
-          ? `${data.name}'s information has been updated.`
-          : `${data.name} has been added to the system.`
-      });
-      
+      // Prepare request body matching backend DTO
+      const requestBody: any = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        dob: data.dob,
+        gender_concept_id: data.gender_concept_id,
+      };
+
+      // Add contact info if provided
+      if (data.phone || data.email) {
+        requestBody.contact = {};
+        if (data.phone) requestBody.contact.phone = data.phone;
+        if (data.email) requestBody.contact.email = data.email;
+      }
+
+      // Add optional fields
+      if (data.race_concept_id) requestBody.race_concept_id = data.race_concept_id;
+      if (data.ethnicity_concept_id) requestBody.ethnicity_concept_id = data.ethnicity_concept_id;
+
+      if (isEditMode && id) {
+        // Update existing patient
+        await apiClient.patch(`/patients/${id}`, requestBody);
+        toast({
+          title: 'Patient updated',
+          description: `${data.first_name} ${data.last_name}'s information has been updated.`
+        });
+      } else {
+        // Create new patient
+        await apiClient.post('/patients', requestBody);
+        toast({
+          title: 'Patient created',
+          description: `${data.first_name} ${data.last_name} has been added to the system.`
+        });
+      }
+
       navigate('/patients');
     } catch (error) {
+      const errorMessage = error instanceof ApiClientError
+        ? error.message
+        : 'There was a problem saving the patient information.';
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'There was a problem saving the patient information.'
+        description: errorMessage
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex items-center mb-6">
+          <Button variant="ghost" onClick={() => navigate('/patients')} className="mr-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="page-title m-0">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -174,8 +182,8 @@ const PatientForm = () => {
         <CardHeader>
           <CardTitle>{isEditMode ? 'Edit Patient Information' : 'Patient Information'}</CardTitle>
           <CardDescription>
-            {isEditMode 
-              ? 'Update the patient\'s information below.' 
+            {isEditMode
+              ? 'Update the patient\'s information below.'
               : 'Enter the new patient\'s information below.'}
           </CardDescription>
         </CardHeader>
@@ -185,12 +193,26 @@ const PatientForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="first_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Smith" {...field} />
+                        <Input placeholder="John" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -213,12 +235,40 @@ const PatientForm = () => {
 
                 <FormField
                   control={form.control}
+                  name="gender_concept_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {GENDER_OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value.toString()}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
+                        <Input type="email" placeholder="john@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -232,123 +282,7 @@ const PatientForm = () => {
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="(555) 123-4567" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123 Main St, Anytown, CA 12345" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gender</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="hidden md:block" />
-
-                <FormField
-                  control={form.control}
-                  name="insurance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Insurance Provider</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Blue Cross Blue Shield" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="policyNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Policy Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="BC123456789" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="emergencyContact"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Mary Smith" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="emergencyPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(555) 987-6543" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Additional notes about the patient..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
+                        <Input placeholder="+1234567890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -361,12 +295,12 @@ const PatientForm = () => {
                   type="button"
                   variant="outline"
                   onClick={() => navigate('/patients')}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
                     <span className="flex items-center">
                       <span className="animate-spin mr-2">⏳</span>
                       Saving...

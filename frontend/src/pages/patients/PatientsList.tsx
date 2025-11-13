@@ -14,66 +14,84 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { UserPlus, Search, ArrowUpDown, Eye } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-// Mock patient data
-const mockPatients = [
-  { id: '1', name: 'John Smith', dob: '1980-05-15', email: 'john@example.com', phone: '(555) 123-4567' },
-  { id: '2', name: 'Emma Johnson', dob: '1975-10-21', email: 'emma@example.com', phone: '(555) 234-5678' },
-  { id: '3', name: 'Michael Brown', dob: '1990-02-08', email: 'michael@example.com', phone: '(555) 345-6789' },
-  { id: '4', name: 'Olivia Davis', dob: '1985-07-30', email: 'olivia@example.com', phone: '(555) 456-7890' },
-  { id: '5', name: 'William Wilson', dob: '1978-12-12', email: 'william@example.com', phone: '(555) 567-8901' },
-  { id: '6', name: 'Sophia Martinez', dob: '1995-03-25', email: 'sophia@example.com', phone: '(555) 678-9012' },
-  { id: '7', name: 'James Taylor', dob: '1982-09-17', email: 'james@example.com', phone: '(555) 789-0123' },
-  { id: '8', name: 'Isabella Anderson', dob: '1988-06-05', email: 'isabella@example.com', phone: '(555) 890-1234' },
-];
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 
 interface Patient {
-  id: string;
-  name: string;
-  dob: string;
-  email: string;
-  phone: string;
+  person_id: number;
+  first_name?: string;
+  last_name?: string;
+  year_of_birth: number;
+  month_of_birth?: number;
+  day_of_birth?: number;
+  gender_concept_id: number;
+  mrn: string;
+  contact?: {
+    email?: string;
+    phone?: string;
+  };
+}
+
+interface PatientListResponse {
+  items: Patient[];
+  nextCursor?: string;
 }
 
 const PatientsList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [patients, setPatients] = useState<Patient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch patients with React Query
+  const { data, isLoading, error, refetch } = useQuery<PatientListResponse>({
+    queryKey: ['patients', searchQuery],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      params.append('limit', '50');
+      
+      const queryString = params.toString();
+      return apiClient.get<PatientListResponse>(`/patients${queryString ? `?${queryString}` : ''}`);
+    },
+  });
 
   useEffect(() => {
-    // Simulate API call to fetch patients
-    const fetchPatients = async () => {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setPatients(mockPatients);
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error fetching patients',
-          description: 'There was a problem loading the patient list.'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching patients',
+        description: error instanceof ApiClientError ? error.message : 'There was a problem loading the patient list.'
+      });
+    }
+  }, [error, toast]);
 
-    fetchPatients();
-  }, [toast]);
-
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleViewPatient = (id: string) => {
-    navigate(`/patients/${id}`);
+  const formatPatientName = (patient: Patient) => {
+    const firstName = patient.first_name || '';
+    const lastName = patient.last_name || '';
+    return `${firstName} ${lastName}`.trim() || 'Unknown';
   };
 
-  const formatDateOfBirth = (dob: string) => {
-    return new Date(dob).toLocaleDateString();
+  const formatDateOfBirth = (patient: Patient) => {
+    if (patient.month_of_birth && patient.day_of_birth) {
+      return `${patient.year_of_birth}-${String(patient.month_of_birth).padStart(2, '0')}-${String(patient.day_of_birth).padStart(2, '0')}`;
+    }
+    return `${patient.year_of_birth}`;
+  };
+
+  const formatGender = (genderConceptId: number) => {
+    // Common OMOP gender concept IDs: 8507 = Male, 8532 = Female
+    if (genderConceptId === 8507) return 'Male';
+    if (genderConceptId === 8532) return 'Female';
+    return 'Unknown';
+  };
+
+  const patients = data?.items || [];
+
+  const handleViewPatient = (personId: number) => {
+    navigate(`/patients/${personId}`);
   };
 
   return (
@@ -95,7 +113,7 @@ const PatientsList = () => {
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search patients..."
+            placeholder="Search patients by name or MRN..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -128,7 +146,7 @@ const PatientsList = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredPatients.length === 0 ? (
+            ) : patients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-10">
                   <div className="flex flex-col items-center justify-center space-y-2">
@@ -146,28 +164,20 @@ const PatientsList = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPatients.map(patient => (
-                <TableRow key={patient.id}>
-                  <TableCell className="font-medium">{patient.name}</TableCell>
-                  <TableCell>{formatDateOfBirth(patient.dob)}</TableCell>
-                  <TableCell>{patient.email}</TableCell>
-                  <TableCell>{patient.phone}</TableCell>
+              patients.map(patient => (
+                <TableRow key={patient.person_id}>
+                  <TableCell className="font-medium">{formatPatientName(patient)}</TableCell>
+                  <TableCell>{formatDateOfBirth(patient)}</TableCell>
+                  <TableCell>{patient.contact?.email || 'N/A'}</TableCell>
+                  <TableCell>{patient.contact?.phone || 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleViewPatient(patient.id)}
+                      onClick={() => handleViewPatient(patient.person_id)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       View
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="ml-2"
-                      onClick={() => console.log(`Transfer patient ${patient.id}`)}
-                    >
-                      Transfer
                     </Button>
                   </TableCell>
                 </TableRow>

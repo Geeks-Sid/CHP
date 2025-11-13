@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,157 +15,162 @@ import {
   Table,
 } from "@/components/ui/table";
 import {
-  PlusIcon,
   SearchIcon,
-  UserIcon,
+  UserPlusIcon,
   EditIcon,
   TrashIcon,
-  ShieldIcon,
   EyeIcon,
-  MoreHorizontalIcon,
-  UserPlusIcon,
-  CheckCircleIcon,
-  XCircleIcon,
 } from 'lucide-react';
-import { UserRole } from '@/context/AuthContext';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
-type User = {
-  id: string;
-  name: string;
+interface BackendUser {
+  user_id: string;
+  username: string;
   email: string;
-  role: UserRole;
-  department?: string;
-  status: 'active' | 'inactive' | 'suspended';
-  lastActive: string;
-};
+  active: boolean;
+  roles: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserListResponse {
+  items: BackendUser[];
+  nextCursor?: string;
+}
+
+const createUserSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(12, 'Password must be at least 12 characters'),
+  role_ids: z.array(z.string()).min(1, 'At least one role is required'),
+});
+
+type CreateUserForm = z.infer<typeof createUserSchema>;
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  
-  // Mock data for users
-  const users: User[] = [
-    { 
-      id: '1', 
-      name: 'Dr. John Smith', 
-      email: 'john.smith@hospital.com', 
-      role: 'clinician', 
-      department: 'Cardiology',
-      status: 'active',
-      lastActive: '10 minutes ago'
-    },
-    { 
-      id: '2', 
-      name: 'Sarah Johnson', 
-      email: 'sarah.j@hospital.com', 
-      role: 'receptionist', 
-      department: 'Front Desk',
-      status: 'active',
-      lastActive: '2 hours ago'
-    },
-    { 
-      id: '3', 
-      name: 'Michael Roberts', 
-      email: 'michael.r@hospital.com', 
-      role: 'admin', 
-      department: 'Administration',
-      status: 'active',
-      lastActive: '5 minutes ago'
-    },
-    { 
-      id: '4', 
-      name: 'Emily Chen', 
-      email: 'emily.chen@hospital.com', 
-      role: 'clinician', 
-      department: 'Neurology',
-      status: 'active',
-      lastActive: '1 day ago'
-    },
-    { 
-      id: '5', 
-      name: 'James Wilson', 
-      email: 'james.w@hospital.com', 
-      role: 'pharmacy', 
-      department: 'Pharmacy',
-      status: 'active',
-      lastActive: '3 hours ago'
-    },
-    { 
-      id: '6', 
-      name: 'Linda Martinez', 
-      email: 'linda.m@hospital.com', 
-      role: 'clinician', 
-      department: 'Pediatrics',
-      status: 'suspended',
-      lastActive: '2 weeks ago'
-    },
-    { 
-      id: '7', 
-      name: 'Robert Johnson', 
-      email: 'robert.j@hospital.com', 
-      role: 'patient', 
-      status: 'active',
-      lastActive: '1 day ago'
-    },
-    { 
-      id: '8', 
-      name: 'Patricia Lewis', 
-      email: 'patricia.l@hospital.com', 
-      role: 'receptionist', 
-      department: 'Emergency',
-      status: 'inactive',
-      lastActive: '1 month ago'
-    },
-    { 
-      id: '9', 
-      name: 'David Kim', 
-      email: 'david.k@hospital.com', 
-      role: 'clinician', 
-      department: 'Orthopedics',
-      status: 'active',
-      lastActive: '4 hours ago'
-    },
-    { 
-      id: '10', 
-      name: 'Susan Miller', 
-      email: 'susan.m@hospital.com', 
-      role: 'pharmacy', 
-      department: 'Pharmacy',
-      status: 'active',
-      lastActive: '2 days ago'
-    },
-  ];
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Filter users based on search term, role and status
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    
-    return matchesSearch && matchesRole && matchesStatus;
+  // Fetch users
+  const { data, isLoading, error } = useQuery<UserListResponse>({
+    queryKey: ['users', searchTerm, roleFilter, activeFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (roleFilter !== 'all') params.append('role', roleFilter);
+      if (activeFilter !== 'all') params.append('active', activeFilter === 'active' ? 'true' : 'false');
+      params.append('limit', '50');
+      
+      const queryString = params.toString();
+      return apiClient.get<UserListResponse>(`/users${queryString ? `?${queryString}` : ''}`);
+    },
   });
 
-  const getRoleBadgeColor = (role: UserRole) => {
-    switch(role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'clinician': return 'bg-green-100 text-green-800';
-      case 'receptionist': return 'bg-purple-100 text-purple-800';
-      case 'patient': return 'bg-blue-100 text-blue-800';
-      case 'pharmacy': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  // Fetch roles
+  const { data: rolesData } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      return apiClient.get<Array<{ role_id: number; role_name: string }>>('/users/roles');
+    },
+  });
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (data: CreateUserForm) => {
+      return apiClient.post('/users', {
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        role_ids: data.role_ids.map(id => parseInt(id, 10)),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsCreateSheetOpen(false);
+      toast({
+        title: 'User created',
+        description: 'The user has been successfully created.',
+      });
+    },
+    onError: (error: ApiClientError) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error creating user',
+        description: error.message || 'Failed to create user',
+      });
+    },
+  });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiClient.delete(`/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: 'User deleted',
+        description: 'The user has been successfully deleted.',
+      });
+    },
+    onError: (error: ApiClientError) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error deleting user',
+        description: error.message || 'Failed to delete user',
+      });
+    },
+  });
+
+  const form = useForm<CreateUserForm>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      role_ids: [],
+    },
+  });
+
+  const onSubmit = (data: CreateUserForm) => {
+    createUserMutation.mutate(data);
   };
 
-  const getStatusBadgeColor = (status: 'active' | 'inactive' | 'suspended') => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const users = data?.items || [];
+  const roles = rolesData || [];
+
+  const getRoleDisplay = (roles: string[]) => {
+    return roles.join(', ') || 'No roles';
   };
+
+  const getStatusBadgeColor = (active: boolean) => {
+    return active 
+      ? 'bg-green-100 text-green-800' 
+      : 'bg-gray-100 text-gray-800';
+  };
+
+  if (error) {
+    return (
+      <div className="container p-6 mx-auto">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive">
+              Error loading users: {error instanceof ApiClientError ? error.message : 'Unknown error'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container p-6 mx-auto">
@@ -175,7 +179,7 @@ const UserManagement = () => {
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground">Manage all system users, roles, and permissions</p>
         </div>
-        <Sheet>
+        <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
           <SheetTrigger asChild>
             <Button>
               <UserPlusIcon className="mr-2 h-4 w-4" />
@@ -189,53 +193,114 @@ const UserManagement = () => {
                 Create a new user account with specific role and permissions.
               </SheetDescription>
             </SheetHeader>
-            <div className="grid gap-4 py-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
+                <Label htmlFor="username" className="text-right">
+                  Username
                 </Label>
-                <Input id="name" className="col-span-3" />
+                <Input 
+                  id="username" 
+                  className="col-span-3" 
+                  {...form.register('username')}
+                />
+                {form.formState.errors.username && (
+                  <span className="col-span-4 text-sm text-destructive">
+                    {form.formState.errors.username.message}
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="email" className="text-right">
                   Email
                 </Label>
-                <Input id="email" type="email" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">
-                  Role
-                </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="clinician">Clinician</SelectItem>
-                    <SelectItem value="receptionist">Receptionist</SelectItem>
-                    <SelectItem value="pharmacy">Pharmacy</SelectItem>
-                    <SelectItem value="patient">Patient</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="department" className="text-right">
-                  Department
-                </Label>
-                <Input id="department" className="col-span-3" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  className="col-span-3" 
+                  {...form.register('email')}
+                />
+                {form.formState.errors.email && (
+                  <span className="col-span-4 text-sm text-destructive">
+                    {form.formState.errors.email.message}
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="password" className="text-right">
                   Password
                 </Label>
-                <Input id="password" type="password" className="col-span-3" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  className="col-span-3" 
+                  {...form.register('password')}
+                />
+                {form.formState.errors.password && (
+                  <span className="col-span-4 text-sm text-destructive">
+                    {form.formState.errors.password.message}
+                  </span>
+                )}
               </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button variant="outline">Cancel</Button>
-              <Button>Create User</Button>
-            </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="roles" className="text-right">
+                  Roles
+                </Label>
+                <Select
+                  onValueChange={(value) => {
+                    const currentRoles = form.getValues('role_ids');
+                    if (!currentRoles.includes(value)) {
+                      form.setValue('role_ids', [...currentRoles, value]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.role_id} value={role.role_id.toString()}>
+                        {role.role_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="col-span-4 flex flex-wrap gap-2 mt-2">
+                  {form.watch('role_ids').map((roleId) => {
+                    const role = roles.find(r => r.role_id.toString() === roleId);
+                    return role ? (
+                      <span
+                        key={roleId}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm flex items-center gap-1"
+                      >
+                        {role.role_name}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentRoles = form.getValues('role_ids');
+                            form.setValue('role_ids', currentRoles.filter(id => id !== roleId));
+                          }}
+                          className="ml-1"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsCreateSheetOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                </Button>
+              </div>
+            </form>
           </SheetContent>
         </Sheet>
       </div>
@@ -265,17 +330,17 @@ const UserManagement = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="clinician">Clinician</SelectItem>
-                    <SelectItem value="receptionist">Receptionist</SelectItem>
-                    <SelectItem value="pharmacy">Pharmacy</SelectItem>
-                    <SelectItem value="patient">Patient</SelectItem>
+                    {roles.map((role) => (
+                      <SelectItem key={role.role_id} value={role.role_name}>
+                        {role.role_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="statusFilter" className="sr-only">Filter by Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={activeFilter} onValueChange={setActiveFilter}>
                   <SelectTrigger id="statusFilter" className="w-[160px]">
                     <SelectValue placeholder="Filter by Status" />
                   </SelectTrigger>
@@ -283,179 +348,90 @@ const UserManagement = () => {
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Active</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getRoleBadgeColor(user.role)}`}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </span>
-                    </TableCell>
-                    <TableCell>{user.department || '-'}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(user.status)}`}>
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                      </span>
-                    </TableCell>
-                    <TableCell>{user.lastActive}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <EditIcon className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className={user.role === 'admin' ? 'text-destructive/50 cursor-not-allowed' : 'text-destructive'} disabled={user.role === 'admin'}>
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {isLoading ? (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Loading users...</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Roles</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-10">
+                          <p className="text-muted-foreground">No users found</p>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      users.map((user) => (
+                        <TableRow key={user.user_id}>
+                          <TableCell className="font-medium">{user.username}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {user.roles.map((role, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+                                >
+                                  {role}
+                                </span>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(user.active)}`}>
+                              {user.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => deleteUserMutation.mutate(user.user_id)}
+                                disabled={deleteUserMutation.isPending}
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
-          <div className="flex items-center justify-between space-x-2 py-4">
-            <div className="text-sm text-muted-foreground">
-              Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> users
-            </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+              <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing <strong>{users.length}</strong> users
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Role Distribution</CardTitle>
-            <CardDescription>User counts by role</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-red-500 rounded-full mr-3"></div>
-                  <span>Administrators</span>
-                </div>
-                <div className="font-bold">1</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-green-500 rounded-full mr-3"></div>
-                  <span>Clinicians</span>
-                </div>
-                <div className="font-bold">4</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-purple-500 rounded-full mr-3"></div>
-                  <span>Receptionists</span>
-                </div>
-                <div className="font-bold">2</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-orange-500 rounded-full mr-3"></div>
-                  <span>Pharmacy Staff</span>
-                </div>
-                <div className="font-bold">2</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-blue-500 rounded-full mr-3"></div>
-                  <span>Patients</span>
-                </div>
-                <div className="font-bold">1</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Department Distribution</CardTitle>
-            <CardDescription>Staff allocation by department</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-blue-500 rounded-full mr-3"></div>
-                  <span>Cardiology</span>
-                </div>
-                <div className="font-bold">1</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-purple-500 rounded-full mr-3"></div>
-                  <span>Neurology</span>
-                </div>
-                <div className="font-bold">1</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-green-500 rounded-full mr-3"></div>
-                  <span>Pediatrics</span>
-                </div>
-                <div className="font-bold">1</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-orange-500 rounded-full mr-3"></div>
-                  <span>Pharmacy</span>
-                </div>
-                <div className="font-bold">2</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-2 h-8 bg-yellow-500 rounded-full mr-3"></div>
-                  <span>Other Departments</span>
-                </div>
-                <div className="font-bold">4</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
