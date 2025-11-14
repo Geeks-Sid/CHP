@@ -1,36 +1,33 @@
 
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import {
+  BarChartIcon,
   CalendarIcon,
   ClipboardIcon,
+  ClockIcon,
+  DatabaseIcon,
+  FileTextIcon,
+  HistoryIcon,
   HomeIcon,
   LogOutIcon,
+  MessageSquareIcon,
+  PackageIcon,
+  PillIcon,
   Settings2Icon,
   UserIcon,
-  UsersIcon,
-  FileTextIcon,
-  BarChartIcon,
-  ClockIcon,
-  PillIcon,
-  PackageIcon,
-  MessageSquareIcon,
-  ShieldIcon,
-  DatabaseIcon,
-  ActivityIcon,
-  ListIcon,
-  HistoryIcon,
+  UsersIcon
 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -134,7 +131,7 @@ const Sidebar = () => {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <SidebarMenuButton
-          onClick={logout}
+          onClick={() => logout()}
           className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
         >
           <LogOutIcon className="h-4 w-4 mr-3" />

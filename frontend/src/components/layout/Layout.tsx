@@ -1,11 +1,11 @@
 
-import { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
 import PageTransition from '@/components/ui/PageTransition';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 const Layout = () => {
   const { user, isAuthenticated, isLoading } = useAuth();

@@ -1,8 +1,8 @@
 
+import PageTransition from '@/components/ui/PageTransition';
+import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import PageTransition from '@/components/ui/PageTransition';
 
 const AuthLayout = () => {
   const { isAuthenticated, isLoading } = useAuth();
