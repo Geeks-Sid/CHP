@@ -1,16 +1,14 @@
 
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { apiClient, ApiClientError } from '@/lib/api-client';
+import type { FHIRBundle, FHIREncounter, FHIRPatient } from '@/lib/fhir-service';
+import { getFHIREncounter, getFHIRPatient, searchFHIRPatient } from '@/lib/fhir-service';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getFHIRPatient, searchFHIRPatient, getFHIREncounter } from '@/lib/fhir-service';
-import type { FHIRPatient, FHIREncounter, FHIRBundle } from '@/lib/fhir-service';
+import { useState } from 'react';
 
 const FHIRViewer = () => {
   const { toast } = useToast();

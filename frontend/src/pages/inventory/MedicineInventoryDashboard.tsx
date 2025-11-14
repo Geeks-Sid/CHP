@@ -1,8 +1,5 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusIcon, SearchIcon, FilterIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
     Table,
     TableBody,
@@ -11,6 +8,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { FilterIcon, PlusIcon, SearchIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for medicine inventory
 const mockMedicineItems = [

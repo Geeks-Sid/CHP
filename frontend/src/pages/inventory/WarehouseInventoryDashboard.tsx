@@ -1,8 +1,5 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusIcon, SearchIcon, FilterIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
     Table,
     TableBody,
@@ -11,6 +8,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { FilterIcon, PlusIcon, SearchIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for warehouse items
 const mockWarehouseItems = [
@@ -56,9 +56,9 @@ const WarehouseInventoryDashboard = () => {
                 <div className="space-y-3">
                     {mockWarehouseAlerts.map(alert => (
                         <div key={alert.id} className={`p-3 rounded-md ${alert.type === 'Low Stock' ? 'bg-red-100 text-red-800' :
-                                alert.type === 'Order Incoming' ? 'bg-yellow-100 text-yellow-800' :
-                                    alert.type === 'Stocked' ? 'bg-green-100 text-green-800' :
-                                        'bg-blue-100 text-blue-800'
+                            alert.type === 'Order Incoming' ? 'bg-yellow-100 text-yellow-800' :
+                                alert.type === 'Stocked' ? 'bg-green-100 text-green-800' :
+                                    'bg-blue-100 text-blue-800'
                             }`}>
                             <span className="font-medium">{alert.type}:</span> {alert.item} - {alert.message}
                         </div>

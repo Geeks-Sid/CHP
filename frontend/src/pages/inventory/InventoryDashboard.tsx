@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BarChartIcon, TrendingDownIcon, TrendingUpIcon, AlertTriangleIcon, PackageIcon } from 'lucide-react';
+import { AlertTriangleIcon, PackageIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
 
 // Mock data
 const lowStockItems = [
