@@ -67,13 +67,14 @@ export class PatientsService {
             race_concept_id: data.race_concept_id,
             ethnicity_concept_id: data.ethnicity_concept_id,
             person_source_value: data.person_source_value,
-            // Note: Contact information accepted but not stored (requires additional table/columns)
+            contact_phone: data.contact?.phone,
+            contact_email: data.contact?.email,
         };
 
         try {
             const person = await this.patientsRepository.createPerson(createData);
             logger.info({ personId: person.person_id, mrn: person.mrn }, 'Patient created');
-            return person;
+            return this.mapPersonToResponse(person);
         } catch (error: any) {
             if (error.message === 'USER_ALREADY_LINKED') {
                 throw new ConflictException('User is already linked to another patient');
@@ -90,7 +91,7 @@ export class PatientsService {
         if (!person) {
             throw new NotFoundException('Patient not found');
         }
-        return person;
+        return this.mapPersonToResponse(person);
     }
 
     /**
@@ -101,7 +102,7 @@ export class PatientsService {
         if (!person) {
             throw new NotFoundException('Patient not found');
         }
-        return person;
+        return this.mapPersonToResponse(person);
     }
 
     /**
@@ -171,12 +172,15 @@ export class PatientsService {
             updateData.person_source_value = data.person_source_value;
         }
 
-        // Note: Contact information accepted but not stored (requires additional table/columns)
+        if (data.contact !== undefined) {
+            updateData.contact_phone = data.contact.phone;
+            updateData.contact_email = data.contact.email;
+        }
 
         try {
             const person = await this.patientsRepository.updatePerson(personId, updateData);
             logger.info({ personId }, 'Patient updated');
-            return person;
+            return this.mapPersonToResponse(person);
         } catch (error: any) {
             if (error.message === 'PERSON_NOT_FOUND') {
                 throw new NotFoundException('Patient not found');
@@ -206,9 +210,64 @@ export class PatientsService {
         });
 
         return {
-            items: result.persons,
+            items: result.persons.map(person => this.mapPersonToResponse(person)),
             nextCursor: result.nextCursor,
         };
+    }
+
+    /**
+     * Map Person entity to response DTO format
+     * Converts contact_phone and contact_email to contact object
+     */
+    private mapPersonToResponse(person: {
+        person_id: number;
+        user_id?: string;
+        first_name?: string;
+        last_name?: string;
+        gender_concept_id: number;
+        year_of_birth: number;
+        month_of_birth?: number;
+        day_of_birth?: number;
+        birth_datetime?: Date;
+        race_concept_id?: number;
+        ethnicity_concept_id?: number;
+        person_source_value?: string;
+        mrn: string;
+        contact_phone?: string;
+        contact_email?: string;
+        created_at: Date;
+        updated_at: Date;
+    }) {
+        const response: any = {
+            person_id: person.person_id,
+            user_id: person.user_id,
+            first_name: person.first_name,
+            last_name: person.last_name,
+            gender_concept_id: person.gender_concept_id,
+            year_of_birth: person.year_of_birth,
+            month_of_birth: person.month_of_birth,
+            day_of_birth: person.day_of_birth,
+            birth_datetime: person.birth_datetime,
+            race_concept_id: person.race_concept_id,
+            ethnicity_concept_id: person.ethnicity_concept_id,
+            person_source_value: person.person_source_value,
+            mrn: person.mrn,
+            created_at: person.created_at,
+            updated_at: person.updated_at,
+        };
+
+        // Map contact fields to contact object
+        if (person.contact_phone || person.contact_email) {
+            response.contact = {};
+            if (person.contact_phone) {
+                response.contact.phone = person.contact_phone;
+            }
+            if (person.contact_email) {
+                response.contact.email = person.contact_email;
+            }
+        }
+
+        return response;
     }
 }
 

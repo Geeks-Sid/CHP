@@ -48,6 +48,8 @@ export interface Person {
     ethnicity_concept_id?: number;
     person_source_value?: string;
     mrn: string;
+    contact_phone?: string;
+    contact_email?: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -126,13 +128,14 @@ export class PatientsRepository {
                 `INSERT INTO person (
           user_id, first_name, last_name, gender_concept_id,
           year_of_birth, month_of_birth, day_of_birth, birth_datetime,
-          race_concept_id, ethnicity_concept_id, person_source_value, mrn
+          race_concept_id, ethnicity_concept_id, person_source_value, mrn,
+          contact_phone, contact_email
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING person_id, user_id, first_name, last_name, gender_concept_id,
                   year_of_birth, month_of_birth, day_of_birth, birth_datetime,
                   race_concept_id, ethnicity_concept_id, person_source_value, mrn,
-                  created_at, updated_at`,
+                  contact_phone, contact_email, created_at, updated_at`,
                 [
                     data.user_id || null,
                     data.first_name || null,
@@ -146,7 +149,8 @@ export class PatientsRepository {
                     data.ethnicity_concept_id || null,
                     data.person_source_value || null,
                     mrn,
-                    // Note: contact_phone and contact_email not stored (table doesn't have these columns)
+                    data.contact_phone || null,
+                    data.contact_email || null,
                 ],
             );
 
@@ -163,7 +167,7 @@ export class PatientsRepository {
             `SELECT person_id, user_id, first_name, last_name, gender_concept_id,
               year_of_birth, month_of_birth, day_of_birth, birth_datetime,
               race_concept_id, ethnicity_concept_id, person_source_value, mrn,
-              created_at, updated_at
+              contact_phone, contact_email, created_at, updated_at
        FROM person
        WHERE person_id = $1`,
             [personId],
@@ -180,7 +184,7 @@ export class PatientsRepository {
             `SELECT person_id, user_id, first_name, last_name, gender_concept_id,
               year_of_birth, month_of_birth, day_of_birth, birth_datetime,
               race_concept_id, ethnicity_concept_id, person_source_value, mrn,
-              created_at, updated_at
+              contact_phone, contact_email, created_at, updated_at
        FROM person
        WHERE mrn = $1`,
             [mrn],
@@ -249,6 +253,16 @@ export class PatientsRepository {
                 values.push(data.person_source_value || null);
             }
 
+            if (data.contact_phone !== undefined) {
+                updates.push(`contact_phone = $${paramIndex++}`);
+                values.push(data.contact_phone || null);
+            }
+
+            if (data.contact_email !== undefined) {
+                updates.push(`contact_email = $${paramIndex++}`);
+                values.push(data.contact_email || null);
+            }
+
             if (updates.length === 0) {
                 // No updates, just return existing person
                 const person = await this.findById(personId);
@@ -267,7 +281,7 @@ export class PatientsRepository {
          RETURNING person_id, user_id, first_name, last_name, gender_concept_id,
                    year_of_birth, month_of_birth, day_of_birth, birth_datetime,
                    race_concept_id, ethnicity_concept_id, person_source_value, mrn,
-                   created_at, updated_at`,
+                   contact_phone, contact_email, created_at, updated_at`,
                 values,
             );
 
@@ -349,7 +363,7 @@ export class PatientsRepository {
             `SELECT person_id, user_id, first_name, last_name, gender_concept_id,
               year_of_birth, month_of_birth, day_of_birth, birth_datetime,
               race_concept_id, ethnicity_concept_id, person_source_value, mrn,
-              created_at, updated_at
+              contact_phone, contact_email, created_at, updated_at
        FROM person
        ${whereClause}
        ORDER BY person_id DESC

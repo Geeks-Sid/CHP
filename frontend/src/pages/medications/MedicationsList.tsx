@@ -1,9 +1,7 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusIcon, SearchIcon, FilterIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -12,10 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { FilterIcon, PlusIcon, SearchIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Medication {
   drug_exposure_id: number;
@@ -48,7 +48,7 @@ const MedicationsList = () => {
         // This would require terminology lookup or backend enhancement
       }
       params.append('limit', '50');
-      
+
       const queryString = params.toString();
       return apiClient.get<MedicationListResponse>(`/medications${queryString ? `?${queryString}` : ''}`);
     },

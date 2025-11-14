@@ -1,6 +1,4 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,10 +10,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
-import { UserPlus, Search, ArrowUpDown, Eye } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
+import { ArrowUpDown, Eye, Search, UserPlus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Patient {
   person_id: number;
@@ -61,13 +61,13 @@ const PatientsList = () => {
           throw err;
         }
       }
-      
+
       const params = new URLSearchParams();
       if (searchQuery) {
         params.append('search', searchQuery);
       }
       params.append('limit', '50');
-      
+
       const queryString = params.toString();
       return apiClient.get<PatientListResponse>(`/patients${queryString ? `?${queryString}` : ''}`);
     },

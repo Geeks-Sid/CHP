@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ContactDto } from './contact.dto';
 
 export class PatientResponseDto {
     @ApiProperty({ example: 123 })
@@ -36,6 +38,14 @@ export class PatientResponseDto {
 
     @ApiProperty({ example: 'MRN-2024-000123' })
     mrn: string;
+
+    @ApiProperty({
+        description: 'Contact information',
+        type: ContactDto,
+        required: false,
+    })
+    @Type(() => ContactDto)
+    contact?: ContactDto;
 
     @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
     created_at: Date;
