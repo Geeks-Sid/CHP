@@ -12,6 +12,7 @@ import { HealthModule } from './health/health.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
+import { PrescriptionsModule } from './prescriptions/prescriptions.module';
 import { ProceduresModule } from './procedures/procedures.module';
 import { ReportsModule } from './reports/reports.module';
 import { SecurityModule } from './security/security.module';
@@ -45,6 +46,7 @@ import { VisitsModule } from './visits/visits.module';
     VisitsModule,
     ProceduresModule,
     MedicationsModule,
+    PrescriptionsModule,
     DocumentsModule,
     TerminologyModule,
     FhirModule,
