@@ -47,6 +47,7 @@ export class ProceduresController {
     @ApiQuery({ name: 'visit_occurrence_id', required: false, type: Number, description: 'Filter by visit ID' })
     @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter procedures from date (ISO 8601)' })
     @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter procedures to date (ISO 8601)' })
+    @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by patient name or procedure name' })
     @ApiResponse({ status: 200, description: 'Procedures list', type: ProcedureListResponseDto })
     @ApiResponse({ status: 403, description: 'Insufficient permissions' })
     async searchProcedures(
@@ -56,6 +57,7 @@ export class ProceduresController {
         @Query('visit_occurrence_id') visit_occurrence_id?: string,
         @Query('date_from') date_from?: string,
         @Query('date_to') date_to?: string,
+        @Query('search') search?: string,
     ): Promise<ProcedureListResponseDto> {
         const limitNum = limit ? parseInt(limit, 10) : undefined;
         const personId = person_id ? parseInt(person_id, 10) : undefined;
@@ -68,6 +70,7 @@ export class ProceduresController {
             visit_occurrence_id: visitOccurrenceId,
             date_from,
             date_to,
+            search,
         });
     }
 

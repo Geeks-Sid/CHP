@@ -1,9 +1,7 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusIcon, SearchIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -12,10 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PlusIcon, SearchIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Procedure {
   procedure_occurrence_id: number;
@@ -25,6 +25,8 @@ interface Procedure {
   procedure_date: string;
   procedure_type_concept_id?: number;
   created_at?: string;
+  patient_name?: string;
+  procedure_name?: string;
 }
 
 interface ProcedureListResponse {
@@ -42,21 +44,26 @@ const ProceduresList = () => {
     queryKey: ['procedures', searchTerm],
     queryFn: async () => {
       const params = new URLSearchParams();
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
       params.append('limit', '50');
-      
+
       const queryString = params.toString();
       return apiClient.get<ProcedureListResponse>(`/procedures${queryString ? `?${queryString}` : ''}`);
     },
   });
 
   // Show error toast
-  if (error) {
-    toast({
-      variant: 'destructive',
-      title: 'Error fetching procedures',
-      description: error instanceof ApiClientError ? error.message : 'There was a problem loading procedures.',
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching procedures',
+        description: error instanceof ApiClientError ? error.message : 'There was a problem loading procedures.',
+      });
+    }
+  }, [error, toast]);
 
   const procedures = data?.items || [];
 
@@ -93,34 +100,55 @@ const ProceduresList = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Procedure ID</TableHead>
-                <TableHead>Patient ID</TableHead>
+                <TableHead>Patient</TableHead>
+                <TableHead>Procedure</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>Visit ID</TableHead>
-                <TableHead>Procedure Date</TableHead>
-                <TableHead>Concept ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {procedures.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10">
-                    <p className="text-muted-foreground">No procedures found</p>
+                  <TableCell colSpan={5} className="text-center py-10">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <p className="text-muted-foreground">No procedures found</p>
+                      {searchTerm && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchTerm('')}
+                        >
+                          Clear search
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 procedures.map((procedure) => (
-                  <TableRow key={procedure.procedure_occurrence_id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/procedures/${procedure.procedure_occurrence_id}`)}>
-                    <TableCell className="font-medium">{procedure.procedure_occurrence_id}</TableCell>
-                    <TableCell>{procedure.person_id}</TableCell>
-                    <TableCell>{procedure.visit_occurrence_id || 'N/A'}</TableCell>
+                  <TableRow
+                    key={procedure.procedure_occurrence_id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/procedures/${procedure.procedure_occurrence_id}`)}
+                  >
+                    <TableCell className="font-medium">
+                      {procedure.patient_name || `Patient #${procedure.person_id}`}
+                    </TableCell>
+                    <TableCell>
+                      {procedure.procedure_name || `Procedure #${procedure.procedure_concept_id}`}
+                    </TableCell>
                     <TableCell>{new Date(procedure.procedure_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{procedure.procedure_concept_id}</TableCell>
+                    <TableCell>{procedure.visit_occurrence_id || 'N/A'}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/procedures/${procedure.procedure_occurrence_id}/edit`);
-                      }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/procedures/${procedure.procedure_occurrence_id}/edit`);
+                        }}
+                      >
                         Edit
                       </Button>
                     </TableCell>

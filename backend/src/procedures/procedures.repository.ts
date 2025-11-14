@@ -27,6 +27,8 @@ export interface Procedure {
     visit_occurrence_id?: number;
     created_at: Date;
     updated_at: Date;
+    patient_name?: string; // Joined from person table
+    procedure_name?: string; // Joined from concept table
 }
 
 export interface ProcedureSearchFilters {
@@ -34,6 +36,7 @@ export interface ProcedureSearchFilters {
     visit_occurrence_id?: number;
     date_from?: Date;
     date_to?: Date;
+    search?: string; // Search by patient name or procedure name
     limit?: number;
     cursor?: string;
 }
@@ -80,15 +83,20 @@ export class ProceduresRepository {
     }
 
     /**
-     * Find procedure by ID
+     * Find procedure by ID with joined data
      */
     async findById(procedureId: number): Promise<Procedure | null> {
         const { rows } = await this.databaseService.query<Procedure>(
-            `SELECT procedure_occurrence_id, person_id, procedure_concept_id, procedure_date,
-              procedure_type_concept_id, visit_occurrence_id,
-              created_at, updated_at
-       FROM procedure_occurrence
-       WHERE procedure_occurrence_id = $1`,
+            `SELECT 
+              po.procedure_occurrence_id, po.person_id, po.procedure_concept_id, po.procedure_date,
+              po.procedure_type_concept_id, po.visit_occurrence_id,
+              po.created_at, po.updated_at,
+              p.first_name || ' ' || p.last_name as patient_name,
+              c.concept_name as procedure_name
+       FROM procedure_occurrence po
+       LEFT JOIN person p ON po.person_id = p.person_id
+       LEFT JOIN concept c ON po.procedure_concept_id = c.concept_id
+       WHERE po.procedure_occurrence_id = $1`,
             [procedureId],
         );
 
@@ -173,7 +181,7 @@ export class ProceduresRepository {
             try {
                 const decoded = Buffer.from(filters.cursor, 'base64').toString('utf-8');
                 const cursorData = JSON.parse(decoded);
-                conditions.push(`procedure_occurrence_id < $${paramIndex++}`);
+                conditions.push(`po.procedure_occurrence_id < $${paramIndex++}`);
                 params.push(cursorData.procedure_occurrence_id);
             } catch (error) {
                 logger.warn({ error, cursor: filters.cursor }, 'Invalid cursor');
@@ -182,25 +190,35 @@ export class ProceduresRepository {
 
         // Filter by person
         if (filters.person_id) {
-            conditions.push(`person_id = $${paramIndex++}`);
+            conditions.push(`po.person_id = $${paramIndex++}`);
             params.push(filters.person_id);
         }
 
         // Filter by visit
         if (filters.visit_occurrence_id) {
-            conditions.push(`visit_occurrence_id = $${paramIndex++}`);
+            conditions.push(`po.visit_occurrence_id = $${paramIndex++}`);
             params.push(filters.visit_occurrence_id);
         }
 
         // Filter by date range
         if (filters.date_from) {
-            conditions.push(`procedure_date >= $${paramIndex++}`);
+            conditions.push(`po.procedure_date >= $${paramIndex++}`);
             params.push(filters.date_from);
         }
 
         if (filters.date_to) {
-            conditions.push(`procedure_date <= $${paramIndex++}`);
+            conditions.push(`po.procedure_date <= $${paramIndex++}`);
             params.push(filters.date_to);
+        }
+
+        // Search by patient name or procedure name
+        if (filters.search) {
+            conditions.push(
+                `(p.first_name || ' ' || p.last_name ILIKE $${paramIndex} OR 
+                  c.concept_name ILIKE $${paramIndex})`,
+            );
+            params.push(`%${filters.search}%`);
+            paramIndex++;
         }
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -208,12 +226,17 @@ export class ProceduresRepository {
         // Get procedures (fetch one extra to check for next page)
         params.push(limit + 1);
         const { rows } = await this.databaseService.query<Procedure>(
-            `SELECT procedure_occurrence_id, person_id, procedure_concept_id, procedure_date,
-              procedure_type_concept_id, visit_occurrence_id,
-              created_at, updated_at
-       FROM procedure_occurrence
+            `SELECT 
+              po.procedure_occurrence_id, po.person_id, po.procedure_concept_id, po.procedure_date,
+              po.procedure_type_concept_id, po.visit_occurrence_id,
+              po.created_at, po.updated_at,
+              p.first_name || ' ' || p.last_name as patient_name,
+              c.concept_name as procedure_name
+       FROM procedure_occurrence po
+       LEFT JOIN person p ON po.person_id = p.person_id
+       LEFT JOIN concept c ON po.procedure_concept_id = c.concept_id
        ${whereClause}
-       ORDER BY procedure_occurrence_id DESC
+       ORDER BY po.procedure_occurrence_id DESC
        LIMIT $${paramIndex}`,
             params,
         );

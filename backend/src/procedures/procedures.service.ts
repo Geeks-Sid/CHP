@@ -159,6 +159,7 @@ export class ProceduresService {
         visit_occurrence_id?: number;
         date_from?: string;
         date_to?: string;
+        search?: string;
     }) {
         const limit = Math.min(params.limit || 20, 100); // Max 100 per page
 
@@ -167,6 +168,7 @@ export class ProceduresService {
             cursor: params.cursor,
             person_id: params.person_id,
             visit_occurrence_id: params.visit_occurrence_id,
+            search: params.search,
         };
 
         if (params.date_from) {
