@@ -1,15 +1,15 @@
 
-import React, { useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Download, Filter, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { CalendarIcon, Download, Search } from "lucide-react";
+import { useState } from 'react';
 
 // Mock data for audit logs
 const mockAuditLogs = [
@@ -123,27 +123,27 @@ const AuditLogs = () => {
 
   const filteredLogs = mockAuditLogs.filter(log => {
     // Apply search filter
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.resource.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.details.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Apply date filter
     const matchesDate = !date || format(log.timestamp, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
-    
+
     // Apply action filter
     const matchesAction = filterAction === 'all' || log.action === filterAction;
-    
+
     // Apply severity filter
     const matchesSeverity = filterSeverity === 'all' || log.severity === filterSeverity;
-    
+
     return matchesSearch && matchesDate && matchesAction && matchesSeverity;
   });
 
   // Get unique actions for the filter
   const actions = ['all', ...Array.from(new Set(mockAuditLogs.map(log => log.action)))];
-  
+
   // Get unique severities for the filter
   const severities = ['all', ...Array.from(new Set(mockAuditLogs.map(log => log.severity)))];
 
@@ -188,7 +188,7 @@ const AuditLogs = () => {
           Export Logs
         </Button>
       </div>
-      
+
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Search & Filter</CardTitle>
@@ -205,7 +205,7 @@ const AuditLogs = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <div>
               <Popover>
                 <PopoverTrigger asChild>
@@ -227,7 +227,7 @@ const AuditLogs = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            
+
             <Select value={filterAction} onValueChange={setFilterAction}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Filter by action" />
@@ -240,7 +240,7 @@ const AuditLogs = () => {
                 ))}
               </SelectContent>
             </Select>
-            
+
             <Select value={filterSeverity} onValueChange={setFilterSeverity}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Filter by severity" />
@@ -256,7 +256,7 @@ const AuditLogs = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="pt-6">
           <Table>
@@ -303,7 +303,7 @@ const AuditLogs = () => {
               )}
             </TableBody>
           </Table>
-          
+
           <div className="flex items-center justify-end space-x-2 py-4">
             <Button
               variant="outline"

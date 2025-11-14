@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Treemap } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, Treemap, XAxis, YAxis } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
 
@@ -130,14 +130,36 @@ const detailedDepartmentPerformance = [
 ];
 
 // --- Helper Function to Aggregate Data by Main Department ---
-const aggregatePerformanceByMainDept = (data) => {
+interface DepartmentItem {
+  mainDept: string;
+  subDept?: string;
+  patients: number;
+  revenue: number;
+  satisfaction: number;
+}
+
+interface AggregatedDepartment {
+  name: string;
+  totalPatients: number;
+  totalRevenue: number;
+  weightedSatisfactionSum: number;
+}
+
+interface FinalDepartmentData {
+  name: string;
+  patients: number;
+  revenue: number;
+  satisfaction: number;
+}
+
+const aggregatePerformanceByMainDept = (data: DepartmentItem[]): FinalDepartmentData[] => {
   // Type guard to ensure data is an array
   if (!Array.isArray(data)) {
     console.error("aggregatePerformanceByMainDept received non-array data:", data);
     return []; // Return empty array if input is invalid
   }
 
-  const aggregation = {};
+  const aggregation: Record<string, AggregatedDepartment> = {};
 
   data.forEach((item, index) => {
     // --- Input Validation for each item ---
@@ -190,7 +212,7 @@ const aggregatePerformanceByMainDept = (data) => {
   });
 
   // Now, map the aggregated values into the final format
-  return Object.values(aggregation).map(dept => {
+  return Object.values(aggregation).map((dept: AggregatedDepartment) => {
     const totalPatients = dept.totalPatients;
     const weightedSatisfactionSum = dept.weightedSatisfactionSum;
 

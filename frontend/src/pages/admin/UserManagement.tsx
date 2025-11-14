@@ -1,31 +1,30 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableCell,
-  TableBody,
   Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import {
-  SearchIcon,
-  UserPlusIcon,
-  EditIcon,
-  TrashIcon,
-  EyeIcon,
-} from 'lucide-react';
-import { apiClient, ApiClientError } from '@/lib/api-client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { useForm } from 'react-hook-form';
+import { apiClient, ApiClientError } from '@/lib/api-client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  EditIcon,
+  SearchIcon,
+  TrashIcon,
+  UserPlusIcon
+} from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 interface BackendUser {
@@ -79,7 +78,7 @@ const UserManagement = () => {
       if (roleFilter !== 'all') params.append('role', roleFilter);
       if (activeFilter !== 'all') params.append('active', activeFilter === 'active' ? 'true' : 'false');
       params.append('limit', '50');
-      
+
       const queryString = params.toString();
       return apiClient.get<UserListResponse>(`/users${queryString ? `?${queryString}` : ''}`);
     },
@@ -221,8 +220,8 @@ const UserManagement = () => {
   };
 
   const getStatusBadgeColor = (active: boolean) => {
-    return active 
-      ? 'bg-green-100 text-green-800' 
+    return active
+      ? 'bg-green-100 text-green-800'
       : 'bg-gray-100 text-gray-800';
   };
 
@@ -266,9 +265,9 @@ const UserManagement = () => {
                 <Label htmlFor="username" className="text-right">
                   Username
                 </Label>
-                <Input 
-                  id="username" 
-                  className="col-span-3" 
+                <Input
+                  id="username"
+                  className="col-span-3"
                   {...form.register('username')}
                 />
                 {form.formState.errors.username && (
@@ -281,10 +280,10 @@ const UserManagement = () => {
                 <Label htmlFor="email" className="text-right">
                   Email
                 </Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  className="col-span-3" 
+                <Input
+                  id="email"
+                  type="email"
+                  className="col-span-3"
                   {...form.register('email')}
                 />
                 {form.formState.errors.email && (
@@ -297,10 +296,10 @@ const UserManagement = () => {
                 <Label htmlFor="password" className="text-right">
                   Password
                 </Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  className="col-span-3" 
+                <Input
+                  id="password"
+                  type="password"
+                  className="col-span-3"
                   {...form.register('password')}
                 />
                 {form.formState.errors.password && (
@@ -357,9 +356,9 @@ const UserManagement = () => {
                 </div>
               </div>
               <div className="flex justify-end space-x-2 mt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsCreateSheetOpen(false)}
                 >
                   Cancel
@@ -386,10 +385,10 @@ const UserManagement = () => {
                 <Label htmlFor="edit-email" className="text-right">
                   Email
                 </Label>
-                <Input 
-                  id="edit-email" 
-                  type="email" 
-                  className="col-span-3" 
+                <Input
+                  id="edit-email"
+                  type="email"
+                  className="col-span-3"
                   {...updateForm.register('email')}
                 />
                 {updateForm.formState.errors.email && (
@@ -402,10 +401,10 @@ const UserManagement = () => {
                 <Label htmlFor="edit-password" className="text-right">
                   Password
                 </Label>
-                <Input 
-                  id="edit-password" 
-                  type="password" 
-                  className="col-span-3" 
+                <Input
+                  id="edit-password"
+                  type="password"
+                  className="col-span-3"
                   placeholder="Leave blank to keep current"
                   {...updateForm.register('password')}
                 />
@@ -480,9 +479,9 @@ const UserManagement = () => {
                 </Select>
               </div>
               <div className="flex justify-end space-x-2 mt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setIsEditSheetOpen(false);
                     setEditingUser(null);
@@ -508,10 +507,10 @@ const UserManagement = () => {
           <div className="flex flex-col md:flex-row justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
             <div className="relative w-full md:w-1/3">
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input 
-                placeholder="Search users..." 
+              <Input
+                placeholder="Search users..."
                 className="pl-10"
-                value={searchTerm} 
+                value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
@@ -600,15 +599,15 @@ const UserManagement = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => handleEditUser(user)}
                               >
                                 <EditIcon className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => deleteUserMutation.mutate(user.user_id)}
                                 disabled={deleteUserMutation.isPending}

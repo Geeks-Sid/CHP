@@ -1,33 +1,28 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { 
-  ActivityIcon, 
-  UsersIcon, 
-  CalendarIcon, 
-  PillIcon, 
-  DollarSignIcon,
-  BedIcon,
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ActivityIcon,
   AlertTriangleIcon,
+  BedIcon,
+  CalendarIcon,
+  ClipboardListIcon,
+  DollarSignIcon,
+  PillIcon,
   TrendingUpIcon,
-  ClipboardListIcon
+  UsersIcon
 } from 'lucide-react';
 import {
-  ResponsiveContainer,
-  AreaChart,
   Area,
-  XAxis,
-  YAxis,
+  AreaChart,
   CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
   Cell,
-  BarChart,
-  Bar,
-  Legend
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
 
 const AdminDashboard = () => {
@@ -133,7 +128,7 @@ const AdminDashboard = () => {
                 <AreaChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => `$${value/1000}k`} />
+                  <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
                   <Tooltip formatter={(value) => formatCurrency(value as number)} />
                   <Area type="monotone" dataKey="revenue" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
                 </AreaChart>
@@ -207,13 +202,12 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {alerts.map((alert) => (
-                <div 
-                  key={alert.id} 
-                  className={`p-4 rounded-lg ${
-                    alert.severity === 'high' ? 'bg-red-50 border-l-4 border-red-500' :
+                <div
+                  key={alert.id}
+                  className={`p-4 rounded-lg ${alert.severity === 'high' ? 'bg-red-50 border-l-4 border-red-500' :
                     alert.severity === 'medium' ? 'bg-amber-50 border-l-4 border-amber-500' :
-                    'bg-blue-50 border-l-4 border-blue-500'
-                  }`}
+                      'bg-blue-50 border-l-4 border-blue-500'
+                    }`}
                 >
                   <div className="font-medium">{alert.type}</div>
                   <div className="text-sm text-gray-600">{alert.message}</div>

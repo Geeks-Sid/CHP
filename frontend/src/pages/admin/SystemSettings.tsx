@@ -1,14 +1,13 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 const SystemSettings = () => {
   const { toast } = useToast();
@@ -26,7 +25,7 @@ const SystemSettings = () => {
         <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
         <Button onClick={handleSave}>Save Changes</Button>
       </div>
-      
+
       <Tabs defaultValue="general">
         <TabsList className="grid w-full grid-cols-4 mb-8">
           <TabsTrigger value="general">General</TabsTrigger>
@@ -34,7 +33,7 @@ const SystemSettings = () => {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="general">
           <Card>
             <CardHeader>
@@ -76,9 +75,9 @@ const SystemSettings = () => {
                   </div>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">System Preferences</h3>
                 <div className="space-y-4">
@@ -114,7 +113,7 @@ const SystemSettings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="security">
           <Card>
             <CardHeader>
@@ -146,9 +145,9 @@ const SystemSettings = () => {
                   </div>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Access Controls</h3>
                 <div className="space-y-4">
@@ -175,7 +174,7 @@ const SystemSettings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
@@ -217,9 +216,9 @@ const SystemSettings = () => {
                   </div>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">SMS Notifications</h3>
                 <div className="space-y-4">
@@ -250,7 +249,7 @@ const SystemSettings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="integrations">
           <Card>
             <CardHeader>
@@ -283,9 +282,9 @@ const SystemSettings = () => {
                   </div>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">External APIs</h3>
                 <div className="space-y-4">
