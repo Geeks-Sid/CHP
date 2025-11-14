@@ -50,13 +50,23 @@ const createUserSchema = z.object({
   role_ids: z.array(z.string()).min(1, 'At least one role is required'),
 });
 
+const updateUserSchema = z.object({
+  email: z.string().email('Invalid email address').optional(),
+  password: z.string().min(12, 'Password must be at least 12 characters').optional(),
+  role_ids: z.array(z.string()).optional(),
+  active: z.boolean().optional(),
+});
+
 type CreateUserForm = z.infer<typeof createUserSchema>;
+type UpdateUserForm = z.infer<typeof updateUserSchema>;
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [activeFilter, setActiveFilter] = useState('all');
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<BackendUser | null>(null);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -110,6 +120,34 @@ const UserManagement = () => {
     },
   });
 
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: UpdateUserForm }) => {
+      const updateData: any = {};
+      if (data.email) updateData.email = data.email;
+      if (data.password) updateData.password = data.password;
+      if (data.role_ids) updateData.role_ids = data.role_ids.map(id => parseInt(id, 10));
+      if (data.active !== undefined) updateData.active = data.active;
+      return apiClient.patch(`/users/${userId}`, updateData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsEditSheetOpen(false);
+      setEditingUser(null);
+      toast({
+        title: 'User updated',
+        description: 'The user has been successfully updated.',
+      });
+    },
+    onError: (error: ApiClientError) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error updating user',
+        description: error.message || 'Failed to update user',
+      });
+    },
+  });
+
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -141,8 +179,38 @@ const UserManagement = () => {
     },
   });
 
+  const updateForm = useForm<UpdateUserForm>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      role_ids: [],
+      active: true,
+    },
+  });
+
   const onSubmit = (data: CreateUserForm) => {
     createUserMutation.mutate(data);
+  };
+
+  const onUpdateSubmit = (data: UpdateUserForm) => {
+    if (editingUser) {
+      updateUserMutation.mutate({ userId: editingUser.user_id, data });
+    }
+  };
+
+  const handleEditUser = (user: BackendUser) => {
+    setEditingUser(user);
+    updateForm.reset({
+      email: user.email,
+      password: '',
+      role_ids: user.roles.map(role => {
+        const roleObj = roles.find(r => r.role_name === role);
+        return roleObj ? roleObj.role_id.toString() : '';
+      }).filter(Boolean),
+      active: user.active,
+    });
+    setIsEditSheetOpen(true);
   };
 
   const users = data?.items || [];
@@ -303,6 +371,132 @@ const UserManagement = () => {
             </form>
           </SheetContent>
         </Sheet>
+
+        {/* Edit User Sheet */}
+        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+          <SheetContent className="sm:max-w-lg">
+            <SheetHeader>
+              <SheetTitle>Edit User</SheetTitle>
+              <SheetDescription>
+                Update user account information and permissions.
+              </SheetDescription>
+            </SheetHeader>
+            <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-email" className="text-right">
+                  Email
+                </Label>
+                <Input 
+                  id="edit-email" 
+                  type="email" 
+                  className="col-span-3" 
+                  {...updateForm.register('email')}
+                />
+                {updateForm.formState.errors.email && (
+                  <span className="col-span-4 text-sm text-destructive">
+                    {updateForm.formState.errors.email.message}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-password" className="text-right">
+                  Password
+                </Label>
+                <Input 
+                  id="edit-password" 
+                  type="password" 
+                  className="col-span-3" 
+                  placeholder="Leave blank to keep current"
+                  {...updateForm.register('password')}
+                />
+                {updateForm.formState.errors.password && (
+                  <span className="col-span-4 text-sm text-destructive">
+                    {updateForm.formState.errors.password.message}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-roles" className="text-right">
+                  Roles
+                </Label>
+                <Select
+                  onValueChange={(value) => {
+                    const currentRoles = updateForm.getValues('role_ids') || [];
+                    if (!currentRoles.includes(value)) {
+                      updateForm.setValue('role_ids', [...currentRoles, value]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.role_id} value={role.role_id.toString()}>
+                        {role.role_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="col-span-4 flex flex-wrap gap-2 mt-2">
+                  {updateForm.watch('role_ids')?.map((roleId) => {
+                    const role = roles.find(r => r.role_id.toString() === roleId);
+                    return role ? (
+                      <span
+                        key={roleId}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm flex items-center gap-1"
+                      >
+                        {role.role_name}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentRoles = updateForm.getValues('role_ids') || [];
+                            updateForm.setValue('role_ids', currentRoles.filter(id => id !== roleId));
+                          }}
+                          className="ml-1"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-active" className="text-right">
+                  Active
+                </Label>
+                <Select
+                  value={updateForm.watch('active') ? 'true' : 'false'}
+                  onValueChange={(value) => updateForm.setValue('active', value === 'true')}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditSheetOpen(false);
+                    setEditingUser(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateUserMutation.isPending}>
+                  {updateUserMutation.isPending ? 'Updating...' : 'Update User'}
+                </Button>
+              </div>
+            </form>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <Card>
@@ -406,6 +600,13 @@ const UserManagement = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleEditUser(user)}
+                              >
+                                <EditIcon className="h-4 w-4" />
+                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="icon"

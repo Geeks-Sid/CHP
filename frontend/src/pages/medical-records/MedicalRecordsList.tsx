@@ -31,6 +31,7 @@ const MedicalRecordsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch documents with React Query
   const { data, isLoading, error } = useQuery<DocumentListResponse>({
@@ -71,7 +72,12 @@ const MedicalRecordsList = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Medical Records</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Medical Records</h1>
+        <Button onClick={() => navigate('/medical-records/upload')}>
+          Upload Document
+        </Button>
+      </div>
       
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div>

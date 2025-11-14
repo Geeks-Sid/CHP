@@ -1,97 +1,58 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface MedicalRecord {
-  id: number;
-  patientName: string;
-  patientId: string;
-  type: string;
-  date: string;
-  provider: string;
-  details: {
-    summary: string;
-    notes: string;
-    attachments?: string[];
-  };
-  vitals?: {
-    bloodPressure: string;
-    heartRate: number;
-    temperature: number;
-    respiratoryRate: number;
-    height: number;
-    weight: number;
-  };
-  medications?: {
-    name: string;
-    dosage: string;
-    frequency: string;
-    instructions: string;
-  }[];
+interface Document {
+  document_id: string;
+  patient_person_id: number;
+  filename: string;
+  document_type: string;
+  description?: string;
+  created_at: string;
+  download_url?: string;
 }
 
 const MedicalRecordDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [record, setRecord] = useState<MedicalRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const { data: document, isLoading, error } = useQuery<Document>({
+    queryKey: ['document', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Document ID is required');
+      return apiClient.get<Document>(`/documents/${id}`);
+    },
+    enabled: !!id,
+  });
 
   useEffect(() => {
-    // In a real app, fetch data from API
-    // For now, we'll use mock data
-    const fetchRecord = () => {
-      setLoading(true);
-      setTimeout(() => {
-        // Mock data based on ID
-        setRecord({
-          id: Number(id),
-          patientName: "John Doe",
-          patientId: "P12345",
-          type: "Physical Exam",
-          date: "2023-05-22",
-          provider: "Dr. Williams",
-          details: {
-            summary: "Annual physical examination",
-            notes: "Patient is in good health. No significant issues found. Recommended regular exercise and a balanced diet.",
-            attachments: ["physical_exam_report.pdf", "lab_results.pdf"]
-          },
-          vitals: {
-            bloodPressure: "120/80",
-            heartRate: 72,
-            temperature: 98.6,
-            respiratoryRate: 16,
-            height: 175,
-            weight: 70
-          },
-          medications: [
-            {
-              name: "Vitamin D",
-              dosage: "1000 IU",
-              frequency: "Once daily",
-              instructions: "Take with food"
-            }
-          ]
-        });
-        setLoading(false);
-      }, 500);
-    };
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error loading document',
+        description: error instanceof ApiClientError ? error.message : 'There was a problem loading the document.',
+      });
+    }
+  }, [error, toast]);
 
-    fetchRecord();
-  }, [id]);
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-4 flex justify-center items-center h-64">
-        <div className="animate-pulse text-xl">Loading...</div>
+      <div className="container mx-auto p-4">
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
-  if (!record) {
+  if (!document) {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">Medical Record Not Found</h1>
@@ -119,127 +80,39 @@ const MedicalRecordDetails = () => {
       
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Record Information</CardTitle>
+          <CardTitle>Document Information</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <p><strong>Patient:</strong> {record.patientName}</p>
-              <p><strong>Patient ID:</strong> {record.patientId}</p>
-              <p><strong>Record Type:</strong> {record.type}</p>
+              <p><strong>Filename:</strong> {document.filename}</p>
+              <p><strong>Patient ID:</strong> {document.patient_person_id}</p>
+              <p><strong>Document Type:</strong> {document.document_type}</p>
             </div>
             <div>
-              <p><strong>Date:</strong> {format(new Date(record.date), 'MMMM dd, yyyy')}</p>
-              <p><strong>Provider:</strong> {record.provider}</p>
+              <p><strong>Date:</strong> {format(new Date(document.created_at), 'MMMM dd, yyyy')}</p>
+              {document.description && (
+                <p><strong>Description:</strong> {document.description}</p>
+              )}
             </div>
           </div>
+          {document.download_url && (
+            <div className="mt-4">
+              <Button asChild>
+                <a href={document.download_url} target="_blank" rel="noopener noreferrer">
+                  Download Document
+                </a>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
       
-      <Tabs defaultValue="details" className="mb-6">
-        <TabsList className="mb-4">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          {record.vitals && <TabsTrigger value="vitals">Vitals</TabsTrigger>}
-          {record.medications && <TabsTrigger value="medications">Medications</TabsTrigger>}
-        </TabsList>
-        
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle>Record Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium">Summary</h3>
-                  <p>{record.details.summary}</p>
-                </div>
-                <div>
-                  <h3 className="font-medium">Notes</h3>
-                  <p className="whitespace-pre-line">{record.details.notes}</p>
-                </div>
-                {record.details.attachments && record.details.attachments.length > 0 && (
-                  <div>
-                    <h3 className="font-medium">Attachments</h3>
-                    <ul className="list-disc pl-5">
-                      {record.details.attachments.map((attachment, index) => (
-                        <li key={index}>
-                          <a href="#" className="text-blue-500 hover:underline">
-                            {attachment}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {record.vitals && (
-          <TabsContent value="vitals">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vital Signs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <h3 className="font-medium">Blood Pressure</h3>
-                    <p>{record.vitals.bloodPressure} mmHg</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Heart Rate</h3>
-                    <p>{record.vitals.heartRate} bpm</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Temperature</h3>
-                    <p>{record.vitals.temperature} °F</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Respiratory Rate</h3>
-                    <p>{record.vitals.respiratoryRate} breaths/min</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Height</h3>
-                    <p>{record.vitals.height} cm</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Weight</h3>
-                    <p>{record.vitals.weight} kg</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-        
-        {record.medications && (
-          <TabsContent value="medications">
-            <Card>
-              <CardHeader>
-                <CardTitle>Medications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {record.medications.map((medication, index) => (
-                    <div key={index} className="border p-4 rounded-md">
-                      <h3 className="font-medium text-lg">{medication.name}</h3>
-                      <p><strong>Dosage:</strong> {medication.dosage}</p>
-                      <p><strong>Frequency:</strong> {medication.frequency}</p>
-                      <p><strong>Instructions:</strong> {medication.instructions}</p>
-                    </div>
-                  ))}
-                  {record.medications.length === 0 && (
-                    <p>No medications prescribed.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-      </Tabs>
+      <Link to={`/patients/${document.patient_person_id}`}>
+        <Button variant="secondary" className="mb-4">
+          View Patient
+        </Button>
+      </Link>
       
       <CardFooter className="justify-end p-0">
         <Button variant="outline" onClick={() => window.print()} className="mr-2">
@@ -251,3 +124,4 @@ const MedicalRecordDetails = () => {
 };
 
 export default MedicalRecordDetails;
+

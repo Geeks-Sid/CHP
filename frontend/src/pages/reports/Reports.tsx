@@ -96,6 +96,14 @@ const Reports = () => {
     },
   });
 
+  // Fetch active inpatients
+  const { data: activeInpatients, isLoading: inpatientsLoading } = useQuery({
+    queryKey: ['reports', 'active-inpatients'],
+    queryFn: async () => {
+      return apiClient.get('/reports/active-inpatients');
+    },
+  });
+
   // Transform daily counts for chart
   const appointmentData = useMemo(() => {
     if (!dailyCounts) return [];
@@ -166,6 +174,7 @@ const Reports = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="appointments">Appointments</SelectItem>
+              <SelectItem value="active-inpatients">Active Inpatients</SelectItem>
               <SelectItem value="patients">Patient Demographics</SelectItem>
               <SelectItem value="conditions">Medical Conditions</SelectItem>
             </SelectContent>
@@ -187,6 +196,49 @@ const Reports = () => {
         </div>
       </div>
       
+      {reportType === "active-inpatients" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Inpatients</CardTitle>
+            <CardDescription>
+              Currently admitted patients ({new Date().toLocaleDateString()})
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {inpatientsLoading ? (
+              <div className="h-80 flex items-center justify-center">
+                <Skeleton className="h-full w-full" />
+              </div>
+            ) : activeInpatients && activeInpatients.length > 0 ? (
+              <div className="space-y-4">
+                <div className="text-2xl font-bold mb-4">
+                  Total Active Inpatients: {activeInpatients.length}
+                </div>
+                <div className="space-y-2">
+                  {activeInpatients.map((patient: any) => (
+                    <div key={patient.person_id} className="p-4 border rounded-md">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{patient.first_name} {patient.last_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Visit #{patient.visit_number} - {patient.days_inpatient} days
+                          </p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Admitted: {new Date(patient.visit_start).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No active inpatients</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {reportType === "appointments" && (
         <Card>
           <CardHeader>

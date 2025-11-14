@@ -15,23 +15,23 @@ This document tracks the status of API integrations in the frontend application.
 - ✅ `POST /users` - Create user
 - ✅ `GET /users/roles` - Get available roles
 - ✅ `GET /users/:id` - Get user by ID
+- ✅ `PATCH /users/:id` - Update user
 - ✅ `DELETE /users/:id` - Delete user
-- ⚠️ `PATCH /users/:id` - Update user (API available, UI not implemented)
 
 ### Patient Management
 - ✅ `GET /patients` - Search patients with filters
 - ✅ `POST /patients` - Create patient
 - ✅ `GET /patients/:person_id` - Get patient by ID
+- ✅ `GET /patients/mrn/:mrn` - Get patient by MRN
 - ✅ `PATCH /patients/:person_id` - Update patient
-- ⚠️ `GET /patients/mrn/:mrn` - Get patient by MRN (API available, not used in UI)
 
 ### Visit Management
 - ✅ `GET /visits` - Search visits with filters
 - ✅ `POST /visits` - Create visit
 - ✅ `GET /visits/:id` - Get visit by ID
+- ✅ `GET /visits/visit-number/:visit_number` - Get visit by visit number
+- ✅ `GET /visits/active-inpatient/:person_id` - Get active inpatients
 - ✅ `PATCH /visits/:id` - Update visit
-- ⚠️ `GET /visits/visit-number/:visit_number` - Get visit by visit number (API available, not used in UI)
-- ⚠️ `GET /visits/active-inpatient/:person_id` - Get active inpatients (API available, not used in UI)
 
 ### Medication Management
 - ✅ `GET /medications` - Search medications with filters
@@ -42,31 +42,31 @@ This document tracks the status of API integrations in the frontend application.
 ### Document Management
 - ✅ `GET /documents` - List documents with filters
 - ✅ `GET /documents/:document_id` - Get document by ID with download URL
+- ✅ `POST /documents/presign` - Get presigned URL for upload
+- ✅ `POST /documents/confirm` - Confirm file upload
 - ✅ `DELETE /documents/:document_id` - Delete document
-- ⚠️ `POST /documents/presign` - Get presigned URL for upload (API available, UI not implemented)
-- ⚠️ `POST /documents/confirm` - Confirm file upload (API available, UI not implemented)
 
 ### Reports
 - ✅ `GET /reports/daily-counts` - Get daily visit counts
 - ✅ `GET /reports/statistics` - Get visit statistics summary
-- ⚠️ `GET /reports/active-inpatients` - Get active inpatients report (API available, not used in UI)
+- ✅ `GET /reports/active-inpatients` - Get active inpatients report
 
-## ⚠️ Partially Integrated APIs
+## ✅ Fully Integrated APIs (Previously Missing)
 
 ### Procedures
-- ❌ `GET /procedures` - Not implemented in frontend
-- ❌ `POST /procedures` - Not implemented in frontend
-- ❌ `GET /procedures/:id` - Not implemented in frontend
-- ❌ `PATCH /procedures/:id` - Not implemented in frontend
+- ✅ `GET /procedures` - List procedures with filters
+- ✅ `POST /procedures` - Create procedure
+- ✅ `GET /procedures/:id` - Get procedure by ID
+- ✅ `PATCH /procedures/:id` - Update procedure
 
 ### Terminology Services
-- ❌ `GET /terminology/concepts` - Not implemented in frontend
-- ❌ `POST /terminology/concepts/batch` - Not implemented in frontend
+- ✅ `GET /terminology/concepts` - Search concepts with filters
+- ✅ `POST /terminology/concepts/batch` - Batch lookup concepts
 
 ### FHIR Resources
-- ❌ `GET /fhir/R4/Patient/:id` - Not implemented in frontend
-- ❌ `GET /fhir/R4/Patient` - Not implemented in frontend
-- ❌ `GET /fhir/R4/Encounter/:id` - Not implemented in frontend
+- ✅ `GET /fhir/R4/Patient/:id` - Get FHIR Patient by person ID
+- ✅ `GET /fhir/R4/Patient` - Search FHIR Patient by MRN
+- ✅ `GET /fhir/R4/Encounter/:id` - Get FHIR Encounter by visit ID
 
 ## 📝 Notes
 
@@ -88,14 +88,30 @@ This document tracks the status of API integrations in the frontend application.
 
 9. **FHIR**: FHIR resource endpoints are available but not yet integrated. These would be useful for interoperability with other systems.
 
-## 🔄 Next Steps
+## ✅ Implementation Complete
 
-1. Implement user update functionality (PATCH /users/:id)
-2. Add document upload functionality (presign/confirm endpoints)
-3. Integrate procedures API (create procedures management pages)
-4. Add terminology API integration for concept lookups
-5. Consider adding FHIR endpoints for interoperability
-6. Add patient lookup by MRN in search functionality
-7. Add visit lookup by visit number
-8. Add active inpatients report to dashboard or reports page
+All APIs from the API documentation have been successfully integrated into the frontend:
+
+1. ✅ User update functionality (PATCH /users/:id) - Implemented in UserManagement page
+2. ✅ Document upload functionality (presign/confirm endpoints) - Implemented in DocumentUpload page
+3. ✅ Procedures API (full CRUD) - Implemented in ProceduresList and ProcedureForm pages
+4. ✅ Terminology API integration - Implemented in ConceptSearch page with search and batch lookup
+5. ✅ FHIR endpoints - Implemented in FHIRViewer page for Patient and Encounter resources
+6. ✅ Patient lookup by MRN - Integrated in PatientsList and PatientDetails pages
+7. ✅ Visit lookup by visit number - Integrated in AppointmentsList page
+8. ✅ Active inpatients report - Integrated in Reports page and PatientDetails page
+
+## 📍 New Pages Added
+
+- `/procedures` - Procedures list and management
+- `/procedures/new` - Create new procedure
+- `/procedures/:id` - View/edit procedure
+- `/terminology` - Concept search and batch lookup
+- `/fhir` - FHIR resource viewer
+- `/medical-records/upload` - Document upload
+
+## 🔧 Services Created
+
+- `lib/terminology-service.ts` - Terminology API service functions
+- `lib/fhir-service.ts` - FHIR API service functions
 

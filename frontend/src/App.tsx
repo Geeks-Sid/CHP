@@ -28,6 +28,7 @@ import AppointmentForm from "@/pages/appointments/AppointmentForm";
 // Medical Record Pages
 import MedicalRecordsList from "@/pages/medical-records/MedicalRecordsList";
 import MedicalRecordDetails from "@/pages/medical-records/MedicalRecordDetails";
+import DocumentUpload from "@/pages/medical-records/DocumentUpload";
 
 // Report Pages
 import Reports from "@/pages/reports/Reports";
@@ -41,6 +42,16 @@ import WarehouseInventoryDashboard from "@/pages/inventory/WarehouseInventoryDas
 import MedicineInventoryDashboard from "@/pages/inventory/MedicineInventoryDashboard";
 import PrescriptionsList from "@/pages/prescriptions/PrescriptionsList";
 import MessagesList from "@/pages/messages/MessagesList";
+
+// Procedure Pages
+import ProceduresList from "@/pages/procedures/ProceduresList";
+import ProcedureForm from "@/pages/procedures/ProcedureForm";
+
+// Terminology Pages
+import ConceptSearch from "@/pages/terminology/ConceptSearch";
+
+// FHIR Pages
+import FHIRViewer from "@/pages/fhir/FHIRViewer";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -83,6 +94,7 @@ const App = () => (
 
               {/* Medical Record Routes */}
               <Route path="/medical-records" element={<MedicalRecordsList />} />
+              <Route path="/medical-records/upload" element={<DocumentUpload />} />
               <Route path="/medical-records/:id" element={<MedicalRecordDetails />} />
 
               {/* Inventory Routes */}
@@ -93,6 +105,18 @@ const App = () => (
               <Route path="/medications" element={<MedicationsList />} />
               <Route path="/prescriptions" element={<PrescriptionsList />} />
               <Route path="/messages" element={<MessagesList />} />
+
+              {/* Procedure Routes */}
+              <Route path="/procedures" element={<ProceduresList />} />
+              <Route path="/procedures/new" element={<ProcedureForm />} />
+              <Route path="/procedures/:id" element={<ProcedureForm />} />
+              <Route path="/procedures/:id/edit" element={<ProcedureForm />} />
+
+              {/* Terminology Routes */}
+              <Route path="/terminology" element={<ConceptSearch />} />
+
+              {/* FHIR Routes */}
+              <Route path="/fhir" element={<FHIRViewer />} />
 
               {/* Report Routes */}
               <Route path="/reports" element={<Reports />} />

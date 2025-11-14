@@ -34,10 +34,26 @@ const AppointmentsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
+  // Check if search query is a visit number
+  const isVisitNumber = searchQuery && searchQuery.toUpperCase().startsWith('VIS-');
+
   // Fetch visits/appointments
   const { data, isLoading, error } = useQuery<VisitListResponse>({
-    queryKey: ['visits', searchQuery, user?.id],
+    queryKey: ['visits', searchQuery, user?.id, isVisitNumber],
     queryFn: async () => {
+      // If search query is a visit number, lookup by visit number
+      if (isVisitNumber && searchQuery) {
+        try {
+          const visit = await apiClient.get<Visit>(`/visits/visit-number/${searchQuery.toUpperCase()}`);
+          return { items: [visit], nextCursor: undefined };
+        } catch (err) {
+          if (err instanceof ApiClientError && err.statusCode === 404) {
+            return { items: [], nextCursor: undefined };
+          }
+          throw err;
+        }
+      }
+
       const params = new URLSearchParams();
 
       // Filter by provider if user is a clinician
@@ -195,8 +211,8 @@ const AppointmentsList = () => {
             return (
               <Card key={visit.visit_occurrence_id} className="overflow-hidden">
                 <CardHeader className={`${status === 'Scheduled' ? 'bg-blue-50' :
-                    status === 'Completed' ? 'bg-green-50' :
-                      'bg-yellow-50'
+                  status === 'Completed' ? 'bg-green-50' :
+                    'bg-yellow-50'
                   }`}>
                   <CardTitle className="flex justify-between items-center">
                     <span>Visit #{visit.visit_number}</span>

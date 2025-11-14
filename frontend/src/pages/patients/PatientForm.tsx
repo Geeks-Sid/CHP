@@ -68,12 +68,27 @@ const PatientForm = () => {
     },
   });
 
+  interface PatientData {
+    first_name?: string;
+    last_name?: string;
+    year_of_birth?: number;
+    month_of_birth?: number;
+    day_of_birth?: number;
+    gender_concept_id?: number;
+    race_concept_id?: number;
+    ethnicity_concept_id?: number;
+    contact?: {
+      phone?: string;
+      email?: string;
+    };
+  }
+
   // Fetch patient data if editing
-  const { data: patientData, isLoading } = useQuery({
+  const { data: patientData, isLoading } = useQuery<PatientData | null>({
     queryKey: ['patient', id],
     queryFn: async () => {
       if (!id) return null;
-      return apiClient.get(`/patients/${id}`);
+      return apiClient.get<PatientData>(`/patients/${id}`);
     },
     enabled: isEditMode && !!id,
   });

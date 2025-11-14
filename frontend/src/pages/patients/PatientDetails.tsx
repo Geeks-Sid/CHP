@@ -35,13 +35,38 @@ const PatientDetails = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Check if id is MRN or person_id
+  const isMRN = id?.toUpperCase().startsWith('MRN-');
+
   const { data: patient, isLoading, error } = useQuery<Patient>({
-    queryKey: ['patient', id],
+    queryKey: ['patient', id, isMRN],
     queryFn: async () => {
       if (!id) throw new Error('Patient ID is required');
+      if (isMRN) {
+        return apiClient.get<Patient>(`/patients/mrn/${id.toUpperCase()}`);
+      }
       return apiClient.get<Patient>(`/patients/${id}`);
     },
     enabled: !!id,
+  });
+
+  interface ActiveInpatient {
+    visit_occurrence_id: number;
+    person_id: number;
+    visit_type: string;
+    visit_number: string;
+    visit_start: string;
+    visit_end?: string;
+  }
+
+  // Fetch active inpatient visits
+  const { data: activeInpatients } = useQuery<ActiveInpatient[]>({
+    queryKey: ['active-inpatients', patient?.person_id],
+    queryFn: async () => {
+      if (!patient?.person_id) return [];
+      return apiClient.get<ActiveInpatient[]>(`/visits/active-inpatient/${patient.person_id}`);
+    },
+    enabled: !!patient?.person_id,
   });
 
   useEffect(() => {
@@ -222,6 +247,17 @@ const PatientDetails = () => {
                 </div>
               </div>
             </div>
+
+            {activeInpatients && activeInpatients.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm font-medium text-blue-900">Active Inpatient Visits: {activeInpatients.length}</p>
+                {activeInpatients.map((visit: any) => (
+                  <p key={visit.visit_occurrence_id} className="text-xs text-blue-700 mt-1">
+                    Visit #{visit.visit_number} - Started: {new Date(visit.visit_start).toLocaleDateString()}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {(user?.role === 'receptionist' || user?.role === 'clinician') && (
               <Button

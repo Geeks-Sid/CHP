@@ -47,6 +47,21 @@ const PatientsList = () => {
   const { data, isLoading, error, refetch } = useQuery<PatientListResponse>({
     queryKey: ['patients', searchQuery],
     queryFn: async () => {
+      // Check if search query looks like an MRN (starts with MRN-)
+      if (searchQuery && searchQuery.toUpperCase().startsWith('MRN-')) {
+        try {
+          const mrn = searchQuery.toUpperCase();
+          const patient = await apiClient.get<Patient>(`/patients/mrn/${mrn}`);
+          return { items: [patient], nextCursor: undefined };
+        } catch (err) {
+          // If MRN lookup fails, fall back to regular search
+          if (err instanceof ApiClientError && err.statusCode === 404) {
+            return { items: [], nextCursor: undefined };
+          }
+          throw err;
+        }
+      }
+      
       const params = new URLSearchParams();
       if (searchQuery) {
         params.append('search', searchQuery);
