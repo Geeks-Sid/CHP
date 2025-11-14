@@ -1,20 +1,20 @@
 
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/context/AuthContext';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { cn } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
-import { apiClient, ApiClientError } from '@/lib/api-client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/context/AuthContext';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 interface Patient {
   person_id: number;
@@ -142,7 +142,7 @@ const AppointmentForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.person_id || !formData.time) {
       toast({
         variant: 'destructive',
@@ -303,8 +303,8 @@ const AppointmentForm = () => {
               Cancel
             </Button>
             <Button type="submit" disabled={visitMutation.isPending}>
-              {visitMutation.isPending 
-                ? (isEditMode ? "Updating..." : "Creating...") 
+              {visitMutation.isPending
+                ? (isEditMode ? "Updating..." : "Creating...")
                 : (isEditMode ? "Update Appointment" : "Create Appointment")}
             </Button>
           </CardFooter>
