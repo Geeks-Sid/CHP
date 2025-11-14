@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,24 +7,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface Document {
+  document_id: string;
+  patient_person_id: number;
+  filename: string;
+  document_type: string;
+  description?: string;
+  created_at: string;
+  download_url?: string;
+}
+
+interface DocumentListResponse {
+  items: Document[];
+  nextCursor?: string;
+}
 
 const MedicalRecordsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
-  
-  const records = [
-    { id: 1, patientName: "John Doe", patientId: "P12345", type: "Lab Result", date: "2023-05-15", provider: "Dr. Smith" },
-    { id: 2, patientName: "Jane Smith", patientId: "P12346", type: "Prescription", date: "2023-05-20", provider: "Dr. Johnson" },
-    { id: 3, patientName: "Robert Johnson", patientId: "P12347", type: "Physical Exam", date: "2023-05-22", provider: "Dr. Williams" },
-    { id: 4, patientName: "John Doe", patientId: "P12345", type: "Vaccination", date: "2023-05-25", provider: "Dr. Brown" },
-  ];
+  const { toast } = useToast();
+
+  // Fetch documents with React Query
+  const { data, isLoading, error } = useQuery<DocumentListResponse>({
+    queryKey: ['documents', filterType],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filterType !== "all") {
+        // Note: Backend may need to support document_type filter
+      }
+      params.append('limit', '50');
+      
+      const queryString = params.toString();
+      return apiClient.get<DocumentListResponse>(`/documents${queryString ? `?${queryString}` : ''}`);
+    },
+  });
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching medical records',
+        description: error instanceof ApiClientError ? error.message : 'There was a problem loading medical records.',
+      });
+    }
+  }, [error, toast]);
+
+  const records = data?.items || [];
 
   const filteredRecords = records.filter(record => {
     const matchesSearch = 
-      record.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.patientId.toLowerCase().includes(searchTerm.toLowerCase());
+      record.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.document_type.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = filterType === "all" || record.type === filterType;
+    const matchesType = filterType === "all" || record.document_type === filterType;
     
     return matchesSearch && matchesType;
   });
@@ -60,34 +100,51 @@ const MedicalRecordsList = () => {
         </div>
       </div>
       
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredRecords.map((record) => (
-          <Link to={`/medical-records/${record.id}`} key={record.id}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+      {isLoading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i}>
               <CardHeader>
-                <CardTitle className="text-lg">{record.type}</CardTitle>
+                <Skeleton className="h-6 w-32" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{record.patientName}</span>
-                    <span className="text-sm text-gray-500">{record.patientId}</span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    <p>Date: {format(new Date(record.date), 'MMM dd, yyyy')}</p>
-                    <p>Provider: {record.provider}</p>
-                  </div>
-                </div>
+                <Skeleton className="h-20 w-full" />
               </CardContent>
             </Card>
-          </Link>
-        ))}
-      </div>
-      
-      {filteredRecords.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No medical records found.</p>
+          ))}
         </div>
+      ) : (
+        <>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRecords.map((record) => (
+            <Link to={`/medical-records/${record.document_id}`} key={record.document_id}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg">{record.document_type || 'Medical Record'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{record.filename}</span>
+                      <span className="text-sm text-gray-500">Patient ID: {record.patient_person_id}</span>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <p>Date: {format(new Date(record.created_at), 'MMM dd, yyyy')}</p>
+                      {record.description && <p>{record.description}</p>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+        
+        {filteredRecords.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No medical records found.</p>
+          </div>
+        )}
+        </>
       )}
     </div>
   );
