@@ -1,10 +1,9 @@
 
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -14,9 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
-import { searchConcepts, batchLookupConcepts, type Concept } from '@/lib/terminology-service';
+import { batchLookupConcepts, searchConcepts } from '@/lib/terminology-service';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
 
 const ConceptSearch = () => {
   const { toast } = useToast();

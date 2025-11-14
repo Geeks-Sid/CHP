@@ -1,30 +1,30 @@
 
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from '@/components/ui/use-toast';
+import { apiClient } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
+import { format as dateFormat, subDays } from 'date-fns';
+import { useMemo, useState } from 'react';
 import {
-  BarChart,
   Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from 'recharts';
-import { apiClient, ApiClientError } from '@/lib/api-client';
-import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
-import { subDays, format as dateFormat } from 'date-fns';
 
 interface DailyCount {
   date: string;
@@ -52,7 +52,7 @@ const Reports = () => {
   const dateRange = useMemo(() => {
     const today = new Date();
     let from: Date;
-    
+
     switch (timeRange) {
       case 'week':
         from = subDays(today, 7);
@@ -69,7 +69,7 @@ const Reports = () => {
       default:
         from = subDays(today, 30);
     }
-    
+
     return {
       from: from.toISOString().split('T')[0],
       to: today.toISOString().split('T')[0],
@@ -107,14 +107,14 @@ const Reports = () => {
   // Transform daily counts for chart
   const appointmentData = useMemo(() => {
     if (!dailyCounts) return [];
-    
+
     // Group by week or day based on timeRange
     const grouped: Record<string, { scheduled: number; completed: number; cancelled: number }> = {};
-    
+
     dailyCounts.forEach((count) => {
       const date = new Date(count.date);
       let key: string;
-      
+
       if (timeRange === 'week') {
         key = `Day ${date.getDate()}`;
       } else if (timeRange === 'month') {
@@ -123,24 +123,24 @@ const Reports = () => {
       } else {
         key = dateFormat(date, 'MMM');
       }
-      
+
       if (!grouped[key]) {
         grouped[key] = { scheduled: 0, completed: 0, cancelled: 0 };
       }
-      
+
       grouped[key].scheduled += count.count;
       // Note: Backend may not provide completed/cancelled breakdown
       // This is a simplified version
       grouped[key].completed += Math.floor(count.count * 0.85);
       grouped[key].cancelled += Math.floor(count.count * 0.15);
     });
-    
+
     return Object.entries(grouped).map(([name, data]) => ({
       name,
       ...data,
     }));
   }, [dailyCounts, timeRange]);
-  
+
   // Mock data for patient demographics (would need additional API endpoint)
   const demographicsData = [
     { name: '0-18', value: 15 },
@@ -149,7 +149,7 @@ const Reports = () => {
     { name: '51-65', value: 20 },
     { name: '65+', value: 10 },
   ];
-  
+
   // Mock data for medical conditions (would need additional API endpoint)
   const conditionsData = [
     { name: 'Hypertension', count: 45 },
@@ -158,13 +158,13 @@ const Reports = () => {
     { name: 'Arthritis', count: 20 },
     { name: 'COPD', count: 15 },
   ];
-  
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-  
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Reports</h1>
-      
+
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <div>
           <Label htmlFor="reportType">Report Type</Label>
@@ -195,7 +195,7 @@ const Reports = () => {
           </Select>
         </div>
       </div>
-      
+
       {reportType === "active-inpatients" && (
         <Card>
           <CardHeader>
@@ -250,7 +250,7 @@ const Reports = () => {
                 <TabsTrigger value="bar">Bar Chart</TabsTrigger>
                 <TabsTrigger value="line">Line Chart</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="bar">
                 {countsLoading ? (
                   <div className="h-80 flex items-center justify-center">
@@ -273,7 +273,7 @@ const Reports = () => {
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="line">
                 {countsLoading ? (
                   <div className="h-80 flex items-center justify-center">
@@ -297,7 +297,7 @@ const Reports = () => {
                 )}
               </TabsContent>
             </Tabs>
-            
+
             {statsLoading ? (
               <div className="mt-4 grid grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
@@ -323,7 +323,7 @@ const Reports = () => {
           </CardContent>
         </Card>
       )}
-      
+
       {reportType === "patients" && (
         <Card>
           <CardHeader>
@@ -352,7 +352,7 @@ const Reports = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            
+
             <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
               {demographicsData.map((data, index) => (
                 <div key={index} className="p-3 rounded-md text-center" style={{ backgroundColor: `${COLORS[index]}15` }}>
@@ -364,7 +364,7 @@ const Reports = () => {
           </CardContent>
         </Card>
       )}
-      
+
       {reportType === "conditions" && (
         <Card>
           <CardHeader>
@@ -386,7 +386,7 @@ const Reports = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            
+
             <div className="mt-6">
               <h3 className="font-medium mb-2">Key Insights:</h3>
               <ul className="list-disc pl-5 space-y-1">
@@ -398,7 +398,7 @@ const Reports = () => {
           </CardContent>
         </Card>
       )}
-      
+
       <div className="mt-6 flex justify-end space-x-2">
         <Button variant="outline">
           Export as PDF
