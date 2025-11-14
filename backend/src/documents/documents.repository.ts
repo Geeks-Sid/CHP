@@ -11,6 +11,8 @@ export interface CreateDocumentData {
     content_type?: string;
     size_bytes?: number;
     uploaded_by: string;
+    document_type?: string;
+    description?: string;
 }
 
 export interface UpdateDocumentData {
@@ -31,11 +33,14 @@ export interface Document {
     uploaded_by?: string;
     uploaded_at: Date;
     deleted_at?: Date;
+    document_type?: string;
+    description?: string;
 }
 
 export interface DocumentSearchFilters {
     owner_user_id?: string;
     patient_person_id?: number;
+    document_type?: string;
     include_deleted?: boolean;
     limit?: number;
     cursor?: string;
@@ -63,11 +68,12 @@ export class DocumentsRepository {
             const { rows } = await client.query<Document>(
                 `INSERT INTO document (
           owner_user_id, patient_person_id, file_path, file_name,
-          content_type, size_bytes, uploaded_by
+          content_type, size_bytes, uploaded_by, document_type, description
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING document_id, owner_user_id, patient_person_id, file_path, file_name,
-                  content_type, size_bytes, uploaded_by, uploaded_at, deleted_at`,
+                  content_type, size_bytes, uploaded_by, uploaded_at, deleted_at,
+                  document_type, description`,
                 [
                     data.owner_user_id,
                     data.patient_person_id || null,
@@ -76,6 +82,8 @@ export class DocumentsRepository {
                     data.content_type || null,
                     data.size_bytes || null,
                     data.uploaded_by,
+                    data.document_type || null,
+                    data.description || null,
                 ],
             );
 
@@ -91,7 +99,8 @@ export class DocumentsRepository {
     async findById(documentId: string, includeDeleted: boolean = false): Promise<Document | null> {
         let query = `
       SELECT document_id, owner_user_id, patient_person_id, file_path, file_name,
-             content_type, size_bytes, uploaded_by, uploaded_at, deleted_at
+             content_type, size_bytes, uploaded_by, uploaded_at, deleted_at,
+             document_type, description
       FROM document
       WHERE document_id = $1
     `;
@@ -154,7 +163,8 @@ export class DocumentsRepository {
          WHERE document_id = $${paramIndex}
            AND deleted_at IS NULL
          RETURNING document_id, owner_user_id, patient_person_id, file_path, file_name,
-                   content_type, size_bytes, uploaded_by, uploaded_at, deleted_at`,
+                   content_type, size_bytes, uploaded_by, uploaded_at, deleted_at,
+                   document_type, description`,
                 values,
             );
 
@@ -226,6 +236,12 @@ export class DocumentsRepository {
             params.push(filters.patient_person_id);
         }
 
+        // Filter by document type
+        if (filters.document_type) {
+            conditions.push(`document_type = $${paramIndex++}`);
+            params.push(filters.document_type);
+        }
+
         // Soft delete filter
         if (!filters.include_deleted) {
             conditions.push(`deleted_at IS NULL`);
@@ -237,7 +253,8 @@ export class DocumentsRepository {
         params.push(limit + 1);
         const { rows } = await this.databaseService.query<Document>(
             `SELECT document_id, owner_user_id, patient_person_id, file_path, file_name,
-              content_type, size_bytes, uploaded_by, uploaded_at, deleted_at
+              content_type, size_bytes, uploaded_by, uploaded_at, deleted_at,
+              document_type, description
        FROM document
        ${whereClause}
        ORDER BY uploaded_at DESC, document_id DESC

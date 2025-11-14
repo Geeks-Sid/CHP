@@ -4,13 +4,13 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { logger } from '../common/logger/logger.config';
+import { CreateInventoryTransactionDto } from './dto/create-inventory-transaction.dto';
 import { CreateMedicationInventoryDto } from './dto/create-medication-inventory.dto';
-import { CreateWarehouseItemDto } from './dto/create-warehouse-item.dto';
-import { CreateInventoryTransactionDto, TransactionType } from './dto/create-inventory-transaction.dto';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
+import { CreateWarehouseItemDto } from './dto/create-warehouse-item.dto';
 import { UpdateMedicationInventoryDto } from './dto/update-medication-inventory.dto';
-import { UpdateWarehouseItemDto } from './dto/update-warehouse-item.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
+import { UpdateWarehouseItemDto } from './dto/update-warehouse-item.dto';
 import { InventoryRepository, InventorySearchFilters } from './inventory.repository';
 
 /**
@@ -19,7 +19,7 @@ import { InventoryRepository, InventorySearchFilters } from './inventory.reposit
  */
 @Injectable()
 export class InventoryService {
-    constructor(private readonly inventoryRepository: InventoryRepository) {}
+    constructor(private readonly inventoryRepository: InventoryRepository) { }
 
     // ============================================================================
     // MEDICATION INVENTORY METHODS

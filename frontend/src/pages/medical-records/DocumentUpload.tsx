@@ -1,14 +1,14 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Upload } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Patient {
   person_id: number;
@@ -43,11 +43,12 @@ const DocumentUpload = () => {
       }
       return apiClient.post<{
         upload_id: string;
-        presigned_url: string;
-        expires_in: number;
+        url: string;
+        expires_at: string;
       }>('/documents/presign', {
-        filename: selectedFile.name,
+        file_name: selectedFile.name,
         content_type: selectedFile.type,
+        size_bytes: selectedFile.size,
         patient_person_id: parseInt(formData.patient_person_id, 10),
       });
     },
@@ -70,9 +71,10 @@ const DocumentUpload = () => {
 
   // Step 3: Confirm upload
   const confirmMutation = useMutation({
-    mutationFn: async (uploadId: string) => {
+    mutationFn: async (data: { uploadId: string; filePath: string }) => {
       return apiClient.post('/documents/confirm', {
-        upload_id: uploadId,
+        upload_id: data.uploadId,
+        file_path: data.filePath,
         patient_person_id: parseInt(formData.patient_person_id, 10),
         document_type: formData.document_type,
         description: formData.description || undefined,
@@ -95,18 +97,26 @@ const DocumentUpload = () => {
     try {
       // Step 1: Get presigned URL
       const presignResult = await presignMutation.mutateAsync();
-      
+
       // Step 2: Upload file
-      await uploadFile(presignResult.presigned_url, selectedFile);
-      
+      await uploadFile(presignResult.url, selectedFile);
+
+      // Extract file path from presigned URL or construct it
+      // The backend generates the S3 key, so we need to construct it the same way
+      const now = new Date();
+      const year = now.getUTCFullYear();
+      const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const sanitizedFileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `documents/${year}/${month}/${presignResult.upload_id}/${sanitizedFileName}`;
+
       // Step 3: Confirm upload
-      await confirmMutation.mutateAsync(presignResult.upload_id);
-      
+      await confirmMutation.mutateAsync({ uploadId: presignResult.upload_id, filePath });
+
       toast({
         title: 'Document uploaded',
         description: 'The document has been successfully uploaded.',
       });
-      
+
       navigate('/medical-records');
     } catch (error) {
       toast({

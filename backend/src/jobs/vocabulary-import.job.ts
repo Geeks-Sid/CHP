@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Pool } from 'pg';
-import { createReadStream } from 'fs';
 import { parse } from 'csv-parse';
+import { createReadStream } from 'fs';
+import { Pool } from 'pg';
 import { logger } from '../common/logger/logger.config';
 import { DatabaseService } from '../database/database.service';
 

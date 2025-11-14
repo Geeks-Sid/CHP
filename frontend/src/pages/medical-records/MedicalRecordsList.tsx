@@ -1,24 +1,24 @@
 
-import { useState, useEffect } from 'react';
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { format } from "date-fns";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 
 interface Document {
   document_id: string;
   patient_person_id: number;
-  filename: string;
-  document_type: string;
+  file_name?: string;
+  document_type?: string;
   description?: string;
-  created_at: string;
+  uploaded_at: string;
   download_url?: string;
 }
 
@@ -39,10 +39,10 @@ const MedicalRecordsList = () => {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filterType !== "all") {
-        // Note: Backend may need to support document_type filter
+        params.append('document_type', filterType);
       }
       params.append('limit', '50');
-      
+
       const queryString = params.toString();
       return apiClient.get<DocumentListResponse>(`/documents${queryString ? `?${queryString}` : ''}`);
     },
@@ -61,12 +61,12 @@ const MedicalRecordsList = () => {
   const records = data?.items || [];
 
   const filteredRecords = records.filter(record => {
-    const matchesSearch = 
-      record.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.document_type.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch =
+      (record.file_name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (record.document_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+
     const matchesType = filterType === "all" || record.document_type === filterType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -78,7 +78,7 @@ const MedicalRecordsList = () => {
           Upload Document
         </Button>
       </div>
-      
+
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div>
           <Label htmlFor="search">Search</Label>
@@ -105,7 +105,7 @@ const MedicalRecordsList = () => {
           </Select>
         </div>
       </div>
-      
+
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -122,34 +122,34 @@ const MedicalRecordsList = () => {
       ) : (
         <>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRecords.map((record) => (
-            <Link to={`/medical-records/${record.document_id}`} key={record.document_id}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                <CardHeader>
-                  <CardTitle className="text-lg">{record.document_type || 'Medical Record'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{record.filename}</span>
-                      <span className="text-sm text-gray-500">Patient ID: {record.patient_person_id}</span>
+            {filteredRecords.map((record) => (
+              <Link to={`/medical-records/${record.document_id}`} key={record.document_id}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{record.document_type || 'Medical Record'}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{record.file_name || 'Untitled Document'}</span>
+                        <span className="text-sm text-gray-500">Patient ID: {record.patient_person_id}</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        <p>Date: {format(new Date(record.uploaded_at), 'MMM dd, yyyy')}</p>
+                        {record.description && <p>{record.description}</p>}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      <p>Date: {format(new Date(record.created_at), 'MMM dd, yyyy')}</p>
-                      {record.description && <p>{record.description}</p>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-        
-        {filteredRecords.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No medical records found.</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
           </div>
-        )}
+
+          {filteredRecords.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No medical records found.</p>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -2,13 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { logger } from '../common/logger/logger.config';
 import { DatabaseService } from '../database/database.service';
-import { CreateMedicationInventoryDto } from './dto/create-medication-inventory.dto';
-import { CreateWarehouseItemDto } from './dto/create-warehouse-item.dto';
 import { CreateInventoryTransactionDto, ItemType, TransactionType } from './dto/create-inventory-transaction.dto';
+import { CreateMedicationInventoryDto } from './dto/create-medication-inventory.dto';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
+import { CreateWarehouseItemDto } from './dto/create-warehouse-item.dto';
 import { UpdateMedicationInventoryDto } from './dto/update-medication-inventory.dto';
-import { UpdateWarehouseItemDto } from './dto/update-warehouse-item.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
+import { UpdateWarehouseItemDto } from './dto/update-warehouse-item.dto';
 
 // Type definitions
 export interface MedicationInventory {
@@ -102,7 +102,7 @@ export class InventoryRepository {
     constructor(
         @Inject('DATABASE_POOL') private readonly pool: Pool,
         private readonly databaseService: DatabaseService,
-    ) {}
+    ) { }
 
     // ============================================================================
     // MEDICATION INVENTORY METHODS
@@ -199,7 +199,11 @@ export class InventoryRepository {
             }
 
             if (updates.length === 0) {
-                return this.findMedicationInventoryById(id)!;
+                const existing = await this.findMedicationInventoryById(id);
+                if (!existing) {
+                    throw new Error('Medication inventory item not found');
+                }
+                return existing;
             }
 
             values.push(id);
@@ -340,7 +344,11 @@ export class InventoryRepository {
             }
 
             if (updates.length === 0) {
-                return this.findWarehouseItemById(id)!;
+                const existing = await this.findWarehouseItemById(id);
+                if (!existing) {
+                    throw new Error('Warehouse item not found');
+                }
+                return existing;
             }
 
             values.push(id);
@@ -585,7 +593,11 @@ export class InventoryRepository {
             }
 
             if (updates.length === 0) {
-                return this.findSupplierById(id)!;
+                const existing = await this.findSupplierById(id);
+                if (!existing) {
+                    throw new Error('Supplier not found');
+                }
+                return existing;
             }
 
             values.push(id);

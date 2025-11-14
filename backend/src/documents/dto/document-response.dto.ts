@@ -30,6 +30,12 @@ export class DocumentResponseDto {
 
     @ApiProperty({ example: '2024-01-15T10:00:00.000Z', required: false })
     deleted_at?: Date;
+
+    @ApiProperty({ example: 'Lab Result', required: false })
+    document_type?: string;
+
+    @ApiProperty({ example: 'Annual checkup report', required: false })
+    description?: string;
 }
 
 export class DocumentWithDownloadUrlDto extends DocumentResponseDto {

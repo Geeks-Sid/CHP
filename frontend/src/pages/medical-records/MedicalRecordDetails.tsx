@@ -1,22 +1,21 @@
 
-import { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { format } from "date-fns";
+import { useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 interface Document {
   document_id: string;
   patient_person_id: number;
-  filename: string;
-  document_type: string;
+  file_name?: string;
+  document_type?: string;
   description?: string;
-  created_at: string;
+  uploaded_at: string;
   download_url?: string;
 }
 
@@ -72,12 +71,12 @@ const MedicalRecordDetails = () => {
           <Button variant="outline" onClick={() => navigate('/medical-records')}>
             Back to List
           </Button>
-          <Link to={`/patients/${record.patientId}`}>
+          <Link to={`/patients/${document.patient_person_id}`}>
             <Button variant="secondary">View Patient</Button>
           </Link>
         </div>
       </div>
-      
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Document Information</CardTitle>
@@ -85,12 +84,12 @@ const MedicalRecordDetails = () => {
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <p><strong>Filename:</strong> {document.filename}</p>
+              <p><strong>Filename:</strong> {document.file_name || 'Untitled Document'}</p>
               <p><strong>Patient ID:</strong> {document.patient_person_id}</p>
-              <p><strong>Document Type:</strong> {document.document_type}</p>
+              <p><strong>Document Type:</strong> {document.document_type || 'N/A'}</p>
             </div>
             <div>
-              <p><strong>Date:</strong> {format(new Date(document.created_at), 'MMMM dd, yyyy')}</p>
+              <p><strong>Date:</strong> {format(new Date(document.uploaded_at), 'MMMM dd, yyyy')}</p>
               {document.description && (
                 <p><strong>Description:</strong> {document.description}</p>
               )}
@@ -107,13 +106,13 @@ const MedicalRecordDetails = () => {
           )}
         </CardContent>
       </Card>
-      
+
       <Link to={`/patients/${document.patient_person_id}`}>
         <Button variant="secondary" className="mb-4">
           View Patient
         </Button>
       </Link>
-      
+
       <CardFooter className="justify-end p-0">
         <Button variant="outline" onClick={() => window.print()} className="mr-2">
           Print Record

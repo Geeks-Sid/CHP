@@ -82,6 +82,7 @@ export class DocumentsController {
     @ApiQuery({ name: 'cursor', required: false, type: String, description: 'Pagination cursor' })
     @ApiQuery({ name: 'patient_person_id', required: false, type: Number, description: 'Filter by patient ID' })
     @ApiQuery({ name: 'owner_user_id', required: false, type: String, description: 'Filter by owner user ID (requires document.read permission)' })
+    @ApiQuery({ name: 'document_type', required: false, type: String, description: 'Filter by document type (e.g., Lab Result, Prescription)' })
     @ApiResponse({ status: 200, description: 'Documents list', type: DocumentListResponseDto })
     @ApiResponse({ status: 403, description: 'Insufficient permissions' })
     async listDocuments(
@@ -90,6 +91,7 @@ export class DocumentsController {
         @Query('cursor') cursor?: string,
         @Query('patient_person_id') patient_person_id?: string,
         @Query('owner_user_id') owner_user_id?: string,
+        @Query('document_type') document_type?: string,
     ): Promise<DocumentListResponseDto> {
         const limitNum = limit ? parseInt(limit, 10) : undefined;
         const patientPersonId = patient_person_id ? parseInt(patient_person_id, 10) : undefined;
@@ -100,6 +102,7 @@ export class DocumentsController {
             cursor,
             patient_person_id: patientPersonId,
             owner_user_id: owner_user_id,
+            document_type: document_type,
         });
     }
 

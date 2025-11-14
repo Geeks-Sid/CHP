@@ -30,6 +30,9 @@ export interface PresignResponse {
 export interface ConfirmUploadRequest {
     upload_id: string;
     file_path: string;
+    patient_person_id?: number;
+    document_type?: string;
+    description?: string;
     checksum?: string;
 }
 
@@ -48,6 +51,7 @@ export class DocumentsService {
         content_type: string;
         size_bytes: number;
         expires_at: Date;
+        s3_key: string;
     }>();
 
     constructor(
@@ -109,6 +113,7 @@ export class DocumentsService {
             content_type: request.content_type,
             size_bytes: request.size_bytes,
             expires_at: expiresAt,
+            s3_key: s3Key,
         });
 
         logger.info(
@@ -149,14 +154,19 @@ export class DocumentsService {
         }
 
         // Create document record
+        // Use file_path from request if provided, otherwise use stored s3_key
+        const filePath = request.file_path || metadata.s3_key;
+        
         const createData: CreateDocumentData = {
             owner_user_id: metadata.owner_user_id,
-            patient_person_id: metadata.patient_person_id,
-            file_path: request.file_path,
+            patient_person_id: request.patient_person_id || metadata.patient_person_id,
+            file_path: filePath,
             file_name: metadata.file_name,
             content_type: metadata.content_type,
             size_bytes: metadata.size_bytes,
             uploaded_by: userId,
+            document_type: request.document_type,
+            description: request.description,
         };
 
         try {
@@ -226,6 +236,7 @@ export class DocumentsService {
         filters: {
             patient_person_id?: number;
             owner_user_id?: string;
+            document_type?: string;
             limit?: number;
             cursor?: string;
         },
@@ -240,6 +251,7 @@ export class DocumentsService {
         const result = await this.documentsRepository.searchDocuments({
             owner_user_id: filters.owner_user_id,
             patient_person_id: filters.patient_person_id,
+            document_type: filters.document_type,
             limit: filters.limit,
             cursor: filters.cursor,
             include_deleted: false,
