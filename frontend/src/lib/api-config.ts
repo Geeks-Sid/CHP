@@ -14,12 +14,12 @@ const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
-  
+
   // In development, use relative URL (Vite proxy handles it)
   if (import.meta.env.DEV) {
     return '';
   }
-  
+
   // Production default
   return 'http://localhost:3000';
 };

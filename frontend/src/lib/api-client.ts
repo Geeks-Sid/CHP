@@ -93,10 +93,10 @@ async function makeRequest<T>(
   retry = true
 ): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
-  
+
   // Get access token
   let accessToken = tokenStorage.getAccessToken();
-  
+
   // Check if token is expired and refresh if needed
   if (accessToken && tokenStorage.isTokenExpired() && retry) {
     accessToken = await refreshAccessToken();
@@ -129,12 +129,12 @@ async function makeRequest<T>(
         ...options,
         headers,
       });
-      
+
       if (!retryResponse.ok) {
         const error = await parseErrorResponse(retryResponse);
         throw new ApiClientError(error.message, error.statusCode, error.errors);
       }
-      
+
       return retryResponse.json();
     } else {
       // Refresh failed, clear tokens and throw error

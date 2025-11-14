@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { tokenStorage } from '@/lib/token-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export type UserRole = 'patient' | 'receptionist' | 'clinician' | 'pharmacy' | 'admin' | 'warehousemanager';
 
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 refreshToken?: string;
                 expiresIn: number;
               }>('/auth/refresh', { refreshToken });
-              
+
               tokenStorage.setAccessToken(response.accessToken);
               if (response.refreshToken) {
                 tokenStorage.setRefreshToken(response.refreshToken);
@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (response.expiresIn) {
                 tokenStorage.setTokenExpiry(response.expiresIn);
               }
-              
+
               // Now fetch user
               await refreshUser();
             } catch (error) {
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: string;
         roles: string[];
       }>('/auth/me');
-      
+
       const frontendUser = convertBackendUserToFrontendUser(backendUser);
       setUser(frontendUser);
       localStorage.setItem('medicalAppUser', JSON.stringify(frontendUser));
