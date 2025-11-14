@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,48 +7,115 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, ChevronRight, Clock, ClipboardList, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
+import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 
-// Mock data
-const appointmentData = [
-  { name: 'Jan', count: 12 },
-  { name: 'Feb', count: 19 },
-  { name: 'Mar', count: 15 },
-  { name: 'Apr', count: 21 },
-  { name: 'May', count: 18 },
-  { name: 'Jun', count: 24 },
-  { name: 'Jul', count: 28 },
-];
+interface Visit {
+  visit_occurrence_id: number;
+  person_id: number;
+  visit_type: 'OPD' | 'IPD' | 'ER';
+  visit_start: string;
+  visit_end?: string;
+  visit_number: string;
+  reason?: string;
+  provider_id?: string;
+}
 
-const patientAppointments = [
-  { id: 1, doctor: 'Dr. Sarah Johnson', date: '2023-06-20', time: '10:00 AM', type: 'Check-up' },
-  { id: 2, doctor: 'Dr. Michael Chen', date: '2023-07-15', time: '2:30 PM', type: 'Follow-up' },
-];
+interface Patient {
+  person_id: number;
+  first_name?: string;
+  last_name?: string;
+  mrn: string;
+}
 
-const receptionistAppointments = [
-  { id: 1, patient: 'John Smith', doctor: 'Dr. Sarah Johnson', date: '2023-06-20', time: '10:00 AM' },
-  { id: 2, patient: 'Emma Davis', doctor: 'Dr. Michael Chen', date: '2023-06-20', time: '11:30 AM' },
-  { id: 3, patient: 'Robert Wilson', doctor: 'Dr. Sarah Johnson', date: '2023-06-20', time: '2:00 PM' },
-];
-
-const clinicianPatients = [
-  { id: 1, name: 'John Smith', appointment: '10:00 AM', status: 'Checked In', reason: 'Annual physical' },
-  { id: 2, name: 'Emma Davis', appointment: '11:30 AM', status: 'Waiting', reason: 'Follow-up' },
-  { id: 3, name: 'Robert Wilson', appointment: '2:00 PM', status: 'Scheduled', reason: 'Consultation' },
-];
+interface DailyCount {
+  date: string;
+  count: number;
+  visit_type: string;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Get today's date range
+  const todayStart = startOfDay(new Date()).toISOString();
+  const todayEnd = endOfDay(new Date()).toISOString();
+  const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+
+  // Fetch today's visits
+  const { data: todayVisits, isLoading: visitsLoading } = useQuery<{ items: Visit[] }>({
+    queryKey: ['visits', 'today', user?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('date_from', todayStart);
+      params.append('date_to', todayEnd);
+      params.append('limit', '10');
+      
+      // Filter by provider if user is a clinician
+      if (user?.role === 'clinician' && user?.id) {
+        params.append('provider_id', user.id);
+      }
+      
+      return apiClient.get<{ items: Visit[] }>(`/visits?${params.toString()}`);
+    },
+    enabled: !!user,
+  });
+
+  // Fetch recent patients (for receptionist)
+  const { data: recentPatients, isLoading: patientsLoading } = useQuery<{ items: Patient[] }>({
+    queryKey: ['patients', 'recent'],
+    queryFn: async () => {
+      return apiClient.get<{ items: Patient[] }>('/patients?limit=5');
+    },
+    enabled: user?.role === 'receptionist',
+  });
+
+  // Fetch daily counts for chart (last 7 days)
+  const { data: dailyCounts, isLoading: countsLoading } = useQuery<DailyCount[]>({
+    queryKey: ['reports', 'daily-counts', '7days'],
+    queryFn: async () => {
+      const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+      return apiClient.get<DailyCount[]>(
+        `/reports/daily-counts?date_from=${sevenDaysAgo}&date_to=${todayEnd}&visit_type=OPD`
+      );
+    },
+    enabled: user?.role === 'receptionist' || user?.role === 'admin',
+  });
+
+  // Fetch statistics
+  const { data: statistics, isLoading: statsLoading } = useQuery({
+    queryKey: ['reports', 'statistics'],
+    queryFn: async () => {
+      return apiClient.get(`/reports/statistics?date_from=${thirtyDaysAgo}&date_to=${todayEnd}`);
+    },
+    enabled: user?.role === 'receptionist' || user?.role === 'admin',
+  });
+
+  const formatPatientName = (patient: Patient) => {
+    const firstName = patient.first_name || '';
+    const lastName = patient.last_name || '';
+    return `${firstName} ${lastName}`.trim() || 'Unknown';
+  };
+
+  const formatVisitTime = (visitStart: string) => {
+    return format(new Date(visitStart), 'h:mm a');
+  };
+
+  const formatVisitDate = (visitStart: string) => {
+    return format(new Date(visitStart), 'MMM d, yyyy');
+  };
+
+  // Prepare chart data
+  const chartData = dailyCounts?.map(count => ({
+    name: format(new Date(count.date), 'MMM d'),
+    count: count.count,
+  })) || [];
+
+  const isLoading = visitsLoading || patientsLoading || countsLoading || statsLoading;
 
   // Dashboard content based on user role
   const renderDashboardContent = () => {
@@ -84,16 +151,16 @@ const Dashboard = () => {
                   <CardDescription>Your scheduled appointments</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {patientAppointments.length > 0 ? (
+                  {todayVisits?.items && todayVisits.items.length > 0 ? (
                     <ul className="space-y-4">
-                      {patientAppointments.map((appointment) => (
-                        <li key={appointment.id} className="border-b pb-2">
-                          <div className="font-medium">{appointment.doctor}</div>
+                      {todayVisits.items.slice(0, 3).map((visit) => (
+                        <li key={visit.visit_occurrence_id} className="border-b pb-2">
+                          <div className="font-medium">Visit #{visit.visit_number}</div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(appointment.date).toLocaleDateString()} at {appointment.time}
+                            {formatVisitDate(visit.visit_start)} at {formatVisitTime(visit.visit_start)}
                           </div>
                           <div className="pill bg-blue-100 text-blue-800 mt-1">
-                            {appointment.type}
+                            {visit.visit_type}
                           </div>
                         </li>
                       ))}
@@ -175,13 +242,14 @@ const Dashboard = () => {
                   <CardDescription>Appointments scheduled for today</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {receptionistAppointments.length > 0 ? (
+                  {todayVisits?.items && todayVisits.items.length > 0 ? (
                     <ul className="space-y-4">
-                      {receptionistAppointments.map((appointment) => (
-                        <li key={appointment.id} className="border-b pb-2">
-                          <div className="font-medium">{appointment.patient}</div>
-                          <div className="text-sm">{appointment.doctor}</div>
-                          <div className="text-sm text-muted-foreground">{appointment.time}</div>
+                      {todayVisits.items.slice(0, 5).map((visit) => (
+                        <li key={visit.visit_occurrence_id} className="border-b pb-2">
+                          <div className="font-medium">Visit #{visit.visit_number}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatVisitTime(visit.visit_start)} - {visit.visit_type}
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -204,29 +272,43 @@ const Dashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center text-lg">
                     <Users className="mr-2 h-5 w-5 text-purple-500" />
-                    Patient Management
+                    Recent Patients
                   </CardTitle>
-                  <CardDescription>Register and manage patients</CardDescription>
+                  <CardDescription>Recently registered patients</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
-                    onClick={() => navigate('/patients/new')}
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    Register New Patient
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
-                    onClick={() => navigate('/patients')}
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    View All Patients
-                  </Button>
+                <CardContent>
+                  {recentPatients?.items && recentPatients.items.length > 0 ? (
+                    <ul className="space-y-2">
+                      {recentPatients.items.map((patient) => (
+                        <li key={patient.person_id} className="text-sm">
+                          <div className="font-medium">{formatPatientName(patient)}</div>
+                          <div className="text-muted-foreground">MRN: {patient.mrn}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground">No recent patients</p>
+                  )}
+                  <div className="space-y-2 mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start" 
+                      onClick={() => navigate('/patients/new')}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      Register New Patient
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start" 
+                      onClick={() => navigate('/patients')}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      View All Patients
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -236,20 +318,24 @@ const Dashboard = () => {
                     <Calendar className="mr-2 h-5 w-5 text-purple-500" />
                     Appointment Schedule
                   </CardTitle>
-                  <CardDescription>Monthly appointment overview</CardDescription>
+                  <CardDescription>Last 7 days overview</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={appointmentData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {chartData.length > 0 ? (
+                    <div className="h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No data available</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -269,14 +355,16 @@ const Dashboard = () => {
                   <CardDescription>Patients scheduled for today</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {clinicianPatients.length > 0 ? (
+                  {todayVisits?.items && todayVisits.items.length > 0 ? (
                     <ul className="space-y-4">
-                      {clinicianPatients.map((patient) => (
-                        <li key={patient.id} className="border-b pb-2">
-                          <div className="font-medium">{patient.name}</div>
-                          <div className="text-sm">{patient.appointment} - {patient.reason}</div>
+                      {todayVisits.items.slice(0, 5).map((visit) => (
+                        <li key={visit.visit_occurrence_id} className="border-b pb-2">
+                          <div className="font-medium">Visit #{visit.visit_number}</div>
+                          <div className="text-sm">
+                            {formatVisitTime(visit.visit_start)} - {visit.reason || 'No reason specified'}
+                          </div>
                           <div className="pill bg-blue-100 text-blue-800 mt-1">
-                            {patient.status}
+                            {visit.visit_type}
                           </div>
                         </li>
                       ))}
@@ -343,6 +431,94 @@ const Dashboard = () => {
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
                     Generate Reports
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        );
+
+      case 'admin':
+        return (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Users className="mr-2 h-5 w-5 text-red-500" />
+                    Statistics
+                  </CardTitle>
+                  <CardDescription>System overview</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {statistics ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Total Visits (30 days):</span>
+                        <span className="font-medium">{statistics.total_visits || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">OPD Visits:</span>
+                        <span className="font-medium">{statistics.opd_visits || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">IPD Visits:</span>
+                        <span className="font-medium">{statistics.ipd_visits || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">ER Visits:</span>
+                        <span className="font-medium">{statistics.er_visits || 0}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">Loading statistics...</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Calendar className="mr-2 h-5 w-5 text-red-500" />
+                    Today's Activity
+                  </CardTitle>
+                  <CardDescription>Visits scheduled today</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {todayVisits?.items ? (
+                    <div className="text-3xl font-bold">{todayVisits.items.length}</div>
+                  ) : (
+                    <p className="text-muted-foreground">Loading...</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <ClipboardList className="mr-2 h-5 w-5 text-red-500" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>System management</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start" 
+                    onClick={() => navigate('/admin')}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Admin Dashboard
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start" 
+                    onClick={() => navigate('/reports')}
+                  >
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    View Reports
                   </Button>
                 </CardContent>
               </Card>
