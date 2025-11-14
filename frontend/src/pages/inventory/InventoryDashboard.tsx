@@ -15,23 +15,75 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
+import { apiClient } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 import { AlertTriangleIcon, PackageIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
 
-// Mock data
-const lowStockItems = [
-  { id: '1', name: 'Albuterol', category: 'Respiratory', stock: 20, threshold: 50 },
-  { id: '2', name: 'Atorvastatin', category: 'Cholesterol', stock: 15, threshold: 40 },
-  { id: '3', name: 'Hydrochlorothiazide', category: 'Diuretic', stock: 8, threshold: 30 },
-];
+interface InventoryStatistics {
+  total_products: number;
+  low_stock_items: number;
+  pending_orders: number;
+  expiring_soon: number;
+}
 
-const recentTransactions = [
-  { id: '1', date: '2023-09-15', type: 'Incoming', product: 'Amoxicillin', quantity: 50, supplier: 'PharmaCorp' },
-  { id: '2', date: '2023-09-14', type: 'Outgoing', product: 'Lisinopril', quantity: 10, supplier: 'N/A' },
-  { id: '3', date: '2023-09-13', type: 'Incoming', product: 'Metformin', quantity: 100, supplier: 'MediSupply' },
-  { id: '4', date: '2023-09-12', type: 'Outgoing', product: 'Atorvastatin', quantity: 25, supplier: 'N/A' },
-];
+interface InventoryAlert {
+  alert_id: number;
+  item_type: string;
+  item_id: number;
+  alert_type: string;
+  threshold?: number;
+  current_value?: number;
+  status: string;
+}
+
+interface InventoryAlertListResponse {
+  items: InventoryAlert[];
+}
+
+interface InventoryTransaction {
+  transaction_id: number;
+  item_type: string;
+  item_id: number;
+  transaction_type: string;
+  quantity: number;
+  created_at: string;
+}
+
+interface InventoryTransactionListResponse {
+  items: InventoryTransaction[];
+  nextCursor?: string;
+}
 
 const InventoryDashboard = () => {
+  const { toast } = useToast();
+
+  // Fetch statistics
+  const { data: statistics, isLoading: statsLoading } = useQuery<InventoryStatistics>({
+    queryKey: ['inventory-statistics'],
+    queryFn: async () => {
+      return apiClient.get<InventoryStatistics>('/inventory/statistics');
+    },
+  });
+
+  // Fetch low stock alerts
+  const { data: alertsData, isLoading: alertsLoading } = useQuery<InventoryAlertListResponse>({
+    queryKey: ['inventory-alerts'],
+    queryFn: async () => {
+      return apiClient.get<InventoryAlertListResponse>('/inventory/alerts/low-stock');
+    },
+  });
+
+  // Fetch recent transactions
+  const { data: transactionsData, isLoading: transactionsLoading } = useQuery<InventoryTransactionListResponse>({
+    queryKey: ['inventory-transactions'],
+    queryFn: async () => {
+      return apiClient.get<InventoryTransactionListResponse>('/inventory/transactions?limit=10');
+    },
+  });
+
+  const lowStockItems = alertsData?.items || [];
+  const recentTransactions = transactionsData?.items || [];
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Inventory Management</h1>
@@ -43,7 +95,7 @@ const InventoryDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">248</div>
+              <div className="text-2xl font-bold">{statsLoading ? '...' : statistics?.total_products || 0}</div>
               <PackageIcon className="h-8 w-8 text-primary/60" />
             </div>
           </CardContent>
@@ -55,7 +107,7 @@ const InventoryDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-amber-500">12</div>
+              <div className="text-2xl font-bold text-amber-500">{statsLoading ? '...' : statistics?.low_stock_items || 0}</div>
               <AlertTriangleIcon className="h-8 w-8 text-amber-500/60" />
             </div>
           </CardContent>
@@ -67,7 +119,7 @@ const InventoryDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-blue-500">8</div>
+              <div className="text-2xl font-bold text-blue-500">{statsLoading ? '...' : statistics?.pending_orders || 0}</div>
               <TrendingUpIcon className="h-8 w-8 text-blue-500/60" />
             </div>
           </CardContent>
@@ -92,19 +144,33 @@ const InventoryDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lowStockItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>
-                      <span className="text-red-500 font-medium">{item.stock}</span>
-                    </TableCell>
-                    <TableCell>{item.threshold}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="outline">Order</Button>
+                {alertsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      Loading alerts...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : lowStockItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No low stock alerts.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  lowStockItems.map((alert) => (
+                    <TableRow key={alert.alert_id}>
+                      <TableCell className="font-medium">Item #{alert.item_id}</TableCell>
+                      <TableCell>{alert.item_type}</TableCell>
+                      <TableCell>
+                        <span className="text-red-500 font-medium">{alert.current_value || 0}</span>
+                      </TableCell>
+                      <TableCell>{alert.threshold || 0}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline">Order</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -126,23 +192,37 @@ const InventoryDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>{transaction.date}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        {transaction.type === 'Incoming' ? (
-                          <TrendingUpIcon className="h-4 w-4 mr-1 text-green-500" />
-                        ) : (
-                          <TrendingDownIcon className="h-4 w-4 mr-1 text-red-500" />
-                        )}
-                        {transaction.type}
-                      </div>
+                {transactionsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                      Loading transactions...
                     </TableCell>
-                    <TableCell>{transaction.product}</TableCell>
-                    <TableCell>{transaction.quantity}</TableCell>
                   </TableRow>
-                ))}
+                ) : recentTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                      No recent transactions.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  recentTransactions.map((transaction) => (
+                    <TableRow key={transaction.transaction_id}>
+                      <TableCell>{new Date(transaction.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          {transaction.transaction_type === 'incoming' ? (
+                            <TrendingUpIcon className="h-4 w-4 mr-1 text-green-500" />
+                          ) : (
+                            <TrendingDownIcon className="h-4 w-4 mr-1 text-red-500" />
+                          )}
+                          {transaction.transaction_type}
+                        </div>
+                      </TableCell>
+                      <TableCell>Item #{transaction.item_id} ({transaction.item_type})</TableCell>
+                      <TableCell>{Math.abs(transaction.quantity)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

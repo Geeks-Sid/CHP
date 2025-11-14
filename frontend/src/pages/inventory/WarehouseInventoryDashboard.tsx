@@ -8,37 +8,82 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 import { FilterIcon, PlusIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Mock data for warehouse items
-const mockWarehouseItems = [
-    { id: '1', name: 'Medical Gloves (Box)', category: 'Supplies', stock: 500, price: 15.00, supplier: 'SupplyCo' },
-    { id: '2', name: 'Bedpan', category: 'Equipment', stock: 100, price: 25.50, supplier: 'MediEquip' },
-    { id: '3', name: 'Sterile Wipes (Pack)', category: 'Supplies', stock: 300, price: 5.75, supplier: 'SupplyCo' },
-    { id: '4', name: 'Wheelchair', category: 'Equipment', stock: 20, price: 150.00, supplier: 'MediEquip' },
-    { id: '5', name: 'First Aid Kit', category: 'Supplies', stock: 75, price: 30.00, supplier: 'HealthSupply' },
-];
+interface WarehouseItem {
+    warehouse_item_id: number;
+    item_name: string;
+    category?: string;
+    current_stock: number;
+    reorder_level: number;
+    unit_of_measure: string;
+    cost_per_unit?: number;
+    location?: string;
+    supplier_id?: number;
+    active: boolean;
+}
 
-// Mock data for warehouse alerts
-const mockWarehouseAlerts = [
-    { id: 'a1', type: 'Low Stock', item: 'Medical Gloves (Box)', message: 'Stock is below reorder level.' },
-    { id: 'a2', type: 'Order Incoming', item: 'Bedpan', message: 'Expected delivery in 2 days.' },
-    { id: 'a3', type: 'Stocked', item: 'Sterile Wipes (Pack)', message: 'Inventory level is healthy.' },
-    { id: 'a4', type: 'Order Placed', item: 'Wheelchair', message: 'New order placed with MediEquip.' },
-];
+interface WarehouseItemListResponse {
+    items: WarehouseItem[];
+    nextCursor?: string;
+}
+
+interface InventoryAlert {
+    alert_id: number;
+    item_type: string;
+    item_id: number;
+    alert_type: string;
+    threshold?: number;
+    current_value?: number;
+    status: string;
+}
+
+interface InventoryAlertListResponse {
+    items: InventoryAlert[];
+}
 
 const WarehouseInventoryDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
+    const { toast } = useToast();
 
-    const filteredItems = mockWarehouseItems.filter(
-        (item) =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.supplier.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Fetch warehouse items with React Query
+    const { data, isLoading, error } = useQuery<WarehouseItemListResponse>({
+        queryKey: ['warehouse-items', searchTerm],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (searchTerm) {
+                params.append('search', searchTerm);
+            }
+            params.append('limit', '50');
+            const queryString = params.toString();
+            return apiClient.get<WarehouseItemListResponse>(`/inventory/warehouse${queryString ? `?${queryString}` : ''}`);
+        },
+    });
+
+    // Fetch warehouse alerts
+    const { data: alertsData } = useQuery<InventoryAlertListResponse>({
+        queryKey: ['warehouse-alerts'],
+        queryFn: async () => {
+            return apiClient.get<InventoryAlertListResponse>('/inventory/alerts/low-stock?item_type=warehouse');
+        },
+    });
+
+    if (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching warehouse inventory',
+            description: error instanceof ApiClientError ? error.message : 'There was a problem loading the inventory.',
+        });
+    }
+
+    const items = data?.items || [];
+    const alerts = alertsData?.items || [];
 
     return (
         <div className="container mx-auto p-6">
@@ -50,21 +95,19 @@ const WarehouseInventoryDashboard = () => {
                 </Button>
             </div>
 
-            {/* Mock Alerts Section */}
-            <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-3">Alerts</h2>
-                <div className="space-y-3">
-                    {mockWarehouseAlerts.map(alert => (
-                        <div key={alert.id} className={`p-3 rounded-md ${alert.type === 'Low Stock' ? 'bg-red-100 text-red-800' :
-                            alert.type === 'Order Incoming' ? 'bg-yellow-100 text-yellow-800' :
-                                alert.type === 'Stocked' ? 'bg-green-100 text-green-800' :
-                                    'bg-blue-100 text-blue-800'
-                            }`}>
-                            <span className="font-medium">{alert.type}:</span> {alert.item} - {alert.message}
-                        </div>
-                    ))}
+            {/* Alerts Section */}
+            {alerts.length > 0 && (
+                <div className="mb-6">
+                    <h2 className="text-xl font-semibold mb-3">Alerts</h2>
+                    <div className="space-y-3">
+                        {alerts.map(alert => (
+                            <div key={alert.alert_id} className="p-3 rounded-md bg-red-100 text-red-800">
+                                <span className="font-medium">Low Stock:</span> Item ID {alert.item_id} - Current stock ({alert.current_value}) is below threshold ({alert.threshold})
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="flex items-center gap-4 mb-6">
                 <div className="relative flex-1">
@@ -95,27 +138,41 @@ const WarehouseInventoryDashboard = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredItems.map((item) => (
-                            <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/inventory/warehouse/${item.id}`)}>
-                                <TableCell className="font-medium">{item.name}</TableCell>
-                                <TableCell>{item.category}</TableCell>
-                                <TableCell>
-                                    <span className={`px-2 py-1 rounded-full text-xs ${item.stock < 50 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                                        {item.stock} units
-                                    </span>
-                                </TableCell>
-                                <TableCell>${item.price.toFixed(2)}</TableCell>
-                                <TableCell>{item.supplier}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/inventory/warehouse/${item.id}/edit`);
-                                    }}>
-                                        Edit
-                                    </Button>
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    Loading warehouse inventory...
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : items.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    No warehouse items found.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            items.map((item) => (
+                                <TableRow key={item.warehouse_item_id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/inventory/warehouse/${item.warehouse_item_id}`)}>
+                                    <TableCell className="font-medium">{item.item_name}</TableCell>
+                                    <TableCell>{item.category || 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <span className={`px-2 py-1 rounded-full text-xs ${item.current_stock <= item.reorder_level ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                            {item.current_stock} {item.unit_of_measure}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>${item.cost_per_unit?.toFixed(2) || 'N/A'}</TableCell>
+                                    <TableCell>{item.supplier_id ? `Supplier #${item.supplier_id}` : 'N/A'}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/inventory/warehouse/${item.warehouse_item_id}/edit`);
+                                        }}>
+                                            Edit
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>

@@ -5,16 +5,17 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
-import { HealthModule } from './health/health.module';
 import { DocumentsModule } from './documents/documents.module';
-import { SecurityModule } from './security/security.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
+import { FhirModule } from './fhir/fhir.module';
+import { HealthModule } from './health/health.module';
+import { InventoryModule } from './inventory/inventory.module';
 import { MedicationsModule } from './medications/medications.module';
 import { PatientsModule } from './patients/patients.module';
-import { FhirModule } from './fhir/fhir.module';
 import { ProceduresModule } from './procedures/procedures.module';
 import { ReportsModule } from './reports/reports.module';
+import { SecurityModule } from './security/security.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
 import { TerminologyModule } from './terminology/terminology.module';
 import { UsersModule } from './users/users.module';
 import { VisitsModule } from './visits/visits.module';
@@ -48,6 +49,7 @@ import { VisitsModule } from './visits/visits.module';
     TerminologyModule,
     FhirModule,
     ReportsModule,
+    InventoryModule,
   ],
   providers: [
     {

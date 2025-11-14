@@ -8,29 +8,59 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
+import { apiClient, ApiClientError } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 import { FilterIcon, PlusIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Mock data for medicine inventory
-const mockMedicineItems = [
-    { id: '1', name: 'Amoxicillin 500mg', category: 'Antibiotic', stock: 300, price: 10.50, supplier: 'GlobalPharma' },
-    { id: '2', name: 'Lisinopril 10mg', category: 'Blood Pressure', stock: 450, price: 14.00, supplier: 'MediCare' },
-    { id: '3', name: 'Metformin 850mg', category: 'Diabetes', stock: 280, price: 11.25, supplier: 'HealthBridge' },
-    { id: '4', name: 'Atorvastatin 20mg', category: 'Cholesterol', stock: 150, price: 18.75, supplier: 'GlobalPharma' },
-    { id: '5', name: 'Albuterol Inhaler', category: 'Respiratory', stock: 120, price: 25.00, supplier: 'MediCare' },
-];
+interface MedicationInventory {
+    medication_inventory_id: number;
+    medication_name: string;
+    current_stock: number;
+    reorder_level: number;
+    unit_of_measure: string;
+    cost_per_unit?: number;
+    selling_price_per_unit?: number;
+    location?: string;
+    supplier_id?: number;
+    active: boolean;
+}
+
+interface MedicationInventoryListResponse {
+    items: MedicationInventory[];
+    nextCursor?: string;
+}
 
 const MedicineInventoryDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
+    const { toast } = useToast();
 
-    const filteredItems = mockMedicineItems.filter(
-        (item) =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.supplier.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Fetch medication inventory with React Query
+    const { data, isLoading, error } = useQuery<MedicationInventoryListResponse>({
+        queryKey: ['medication-inventory', searchTerm],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (searchTerm) {
+                params.append('search', searchTerm);
+            }
+            params.append('limit', '50');
+            const queryString = params.toString();
+            return apiClient.get<MedicationInventoryListResponse>(`/inventory/medications${queryString ? `?${queryString}` : ''}`);
+        },
+    });
+
+    if (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching medication inventory',
+            description: error instanceof ApiClientError ? error.message : 'There was a problem loading the inventory.',
+        });
+    }
+
+    const items = data?.items || [];
 
     return (
         <div className="container mx-auto p-6">
@@ -63,7 +93,7 @@ const MedicineInventoryDashboard = () => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Category</TableHead>
+                            <TableHead>Location</TableHead>
                             <TableHead>Stock</TableHead>
                             <TableHead>Price</TableHead>
                             <TableHead>Supplier</TableHead>
@@ -71,27 +101,41 @@ const MedicineInventoryDashboard = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredItems.map((item) => (
-                            <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/inventory/medicine/${item.id}`)}>
-                                <TableCell className="font-medium">{item.name}</TableCell>
-                                <TableCell>{item.category}</TableCell>
-                                <TableCell>
-                                    <span className={`px-2 py-1 rounded-full text-xs ${item.stock < 100 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                                        {item.stock} units
-                                    </span>
-                                </TableCell>
-                                <TableCell>${item.price.toFixed(2)}</TableCell>
-                                <TableCell>{item.supplier}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/inventory/medicine/${item.id}/edit`);
-                                    }}>
-                                        Edit
-                                    </Button>
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    Loading medication inventory...
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : items.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    No medication inventory items found.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            items.map((item) => (
+                                <TableRow key={item.medication_inventory_id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/inventory/medicine/${item.medication_inventory_id}`)}>
+                                    <TableCell className="font-medium">{item.medication_name}</TableCell>
+                                    <TableCell>{item.location || 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <span className={`px-2 py-1 rounded-full text-xs ${item.current_stock <= item.reorder_level ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                            {item.current_stock} {item.unit_of_measure}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>${item.selling_price_per_unit?.toFixed(2) || item.cost_per_unit?.toFixed(2) || 'N/A'}</TableCell>
+                                    <TableCell>{item.supplier_id ? `Supplier #${item.supplier_id}` : 'N/A'}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/inventory/medicine/${item.medication_inventory_id}/edit`);
+                                        }}>
+                                            Edit
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>
