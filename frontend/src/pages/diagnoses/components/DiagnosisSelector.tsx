@@ -16,23 +16,38 @@ interface DiagnosisSelectorProps {
 
 export const DiagnosisSelector = ({ value, onSelect, error }: DiagnosisSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  // Debounce search query with 1 second delay
+  useEffect(() => {
+    if (searchQuery.length < 5) {
+      setDebouncedSearchQuery('');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Search concepts (ICD-10 only for diagnoses)
   const { data: searchResults, isLoading } = useQuery({
-    queryKey: ['concepts', 'search', 'ICD10', searchQuery],
+    queryKey: ['concepts', 'search', 'ICD10', debouncedSearchQuery],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return { items: [], nextCursor: undefined };
+      if (!debouncedSearchQuery || debouncedSearchQuery.length < 5) return { items: [], nextCursor: undefined };
       return searchConcepts({
-        q: searchQuery,
+        q: debouncedSearchQuery,
         system: 'ICD10',
-        limit: 20,
+        limit: 5,
       });
     },
-    enabled: isOpen && searchQuery.length >= 2,
+    enabled: isOpen && debouncedSearchQuery.length >= 5,
   });
 
   // Load selected concept if value is provided
@@ -94,12 +109,17 @@ export const DiagnosisSelector = ({ value, onSelect, error }: DiagnosisSelectorP
                 Searching...
               </div>
             )}
-            {!isLoading && searchQuery.length < 2 && (
+            {!isLoading && searchQuery.length < 5 && (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                Type at least 2 characters to search
+                Type at least 5 characters to search
               </div>
             )}
-            {!isLoading && searchQuery.length >= 2 && concepts.length === 0 && (
+            {!isLoading && searchQuery.length >= 5 && debouncedSearchQuery.length < 5 && (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Searching in a moment...
+              </div>
+            )}
+            {!isLoading && debouncedSearchQuery.length >= 5 && concepts.length === 0 && (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 No diagnoses found
               </div>
