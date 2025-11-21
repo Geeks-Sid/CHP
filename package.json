@@ -12,7 +12,8 @@
     "stop:db": "cd database && docker-compose down",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd backend && npm run build && cd ../frontend && npm run build",
-    "clean": "cd database && docker-compose down -v && cd ../backend && rm -rf dist node_modules && cd ../frontend && rm -rf dist node_modules"
+    "clean": "cd database && docker-compose down -v && cd ../backend && rm -rf dist node_modules && cd ../frontend && rm -rf dist node_modules",
+    "healthcheck": "cd backend && npm run healthcheck"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

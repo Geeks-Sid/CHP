@@ -79,6 +79,7 @@ start-dev.bat
 - `npm run install:all` - Install dependencies for all projects
 - `npm run build` - Build both backend and frontend for production
 - `npm run clean` - Clean all build artifacts and node_modules
+- `npm run healthcheck` - Run health check to verify all dependencies are ready
 
 ## Service URLs
 
@@ -114,9 +115,26 @@ If you get port conflicts:
 
 ### Backend won't start
 
-1. Check if database is running: `docker ps | grep postgres`
-2. Verify backend `.env` file exists and has correct database credentials
-3. Check backend logs for specific errors
+1. **Run health check first**: `npm run healthcheck` to identify missing dependencies
+2. Check if database is running: `docker ps | grep postgres`
+3. Verify backend `.env` file exists and has correct database credentials
+4. Check backend logs for specific errors
+
+### Verify Dependencies Before Starting
+
+Before starting the server, run the health check to ensure all dependencies are ready:
+
+```bash
+npm run healthcheck
+```
+
+This will verify:
+- ✅ PostgreSQL database connection and required tables
+- ✅ S3/MinIO connection and bucket
+- ✅ Redis (if configured)
+- ✅ Environment variables configuration
+
+If any checks fail, fix the issues before starting the server. See `backend/README.md` for detailed health check documentation.
 
 ### Frontend won't connect to backend
 
