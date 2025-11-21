@@ -1,7 +1,7 @@
 
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LockIcon, UserIcon, CalendarIcon } from 'lucide-react';
+import { CalendarIcon, LockIcon, UserIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   return (

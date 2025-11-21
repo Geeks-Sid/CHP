@@ -1,16 +1,15 @@
 
-import { useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, ChevronRight, Clock, ClipboardList, Users } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { apiClient, ApiClientError } from '@/lib/api-client';
-import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { format, startOfDay, endOfDay, subDays } from 'date-fns';
+import { useAuth } from '@/context/AuthContext';
+import { apiClient } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
+import { Calendar, ChevronRight, ClipboardList, Clock, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface Visit {
   visit_occurrence_id: number;
@@ -36,6 +35,14 @@ interface DailyCount {
   visit_type: string;
 }
 
+interface Statistics {
+  total_visits: number;
+  opd_count: number;
+  ipd_count: number;
+  er_count: number;
+  active_ipd?: number;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -54,12 +61,12 @@ const Dashboard = () => {
       params.append('date_from', todayStart);
       params.append('date_to', todayEnd);
       params.append('limit', '10');
-      
+
       // Filter by provider if user is a clinician
       if (user?.role === 'clinician' && user?.id) {
         params.append('provider_id', user.id);
       }
-      
+
       return apiClient.get<{ items: Visit[] }>(`/visits?${params.toString()}`);
     },
     enabled: !!user,
@@ -87,10 +94,10 @@ const Dashboard = () => {
   });
 
   // Fetch statistics
-  const { data: statistics, isLoading: statsLoading } = useQuery({
+  const { data: statistics, isLoading: statsLoading } = useQuery<Statistics>({
     queryKey: ['reports', 'statistics'],
     queryFn: async () => {
-      return apiClient.get(`/reports/statistics?date_from=${thirtyDaysAgo}&date_to=${todayEnd}`);
+      return apiClient.get<Statistics>(`/reports/statistics?date_from=${thirtyDaysAgo}&date_to=${todayEnd}`);
     },
     enabled: user?.role === 'receptionist' || user?.role === 'admin',
   });
@@ -184,10 +191,10 @@ const Dashboard = () => {
                   <CardDescription>Your latest medical information</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
                     onClick={() => navigate('/medical-records')}
                   >
                     View Medical Records
@@ -205,19 +212,19 @@ const Dashboard = () => {
                   <CardDescription>Manage your healthcare</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
                     onClick={() => navigate('/appointments/new')}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
                     Schedule Appointment
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
                     onClick={() => navigate('/reports')}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
@@ -256,10 +263,10 @@ const Dashboard = () => {
                   ) : (
                     <p className="text-muted-foreground">No appointments today</p>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full mt-4" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4"
                     onClick={() => navigate('/appointments')}
                   >
                     Manage Appointments
@@ -290,19 +297,19 @@ const Dashboard = () => {
                     <p className="text-muted-foreground">No recent patients</p>
                   )}
                   <div className="space-y-2 mt-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full justify-start" 
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
                       onClick={() => navigate('/patients/new')}
                     >
                       <Users className="mr-2 h-4 w-4" />
                       Register New Patient
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full justify-start" 
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
                       onClick={() => navigate('/patients')}
                     >
                       <Users className="mr-2 h-4 w-4" />
@@ -372,10 +379,10 @@ const Dashboard = () => {
                   ) : (
                     <p className="text-muted-foreground">No patients scheduled for today</p>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full mt-4" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4"
                     onClick={() => navigate('/patients')}
                   >
                     View All Patients
@@ -393,10 +400,10 @@ const Dashboard = () => {
                   <CardDescription>Your scheduled appointments</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
                     onClick={() => navigate('/appointments')}
                   >
                     Manage Appointments
@@ -414,19 +421,19 @@ const Dashboard = () => {
                   <CardDescription>Review and update patient records</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
                     onClick={() => navigate('/medical-records')}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
                     View Medical Records
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
                     onClick={() => navigate('/reports')}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
@@ -451,27 +458,40 @@ const Dashboard = () => {
                   <CardDescription>System overview</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {statistics ? (
+                  {statsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ) : statistics ? (
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm">Total Visits (30 days):</span>
-                        <span className="font-medium">{statistics.total_visits || 0}</span>
+                        <span className="font-medium">{statistics.total_visits ?? 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">OPD Visits:</span>
-                        <span className="font-medium">{statistics.opd_visits || 0}</span>
+                        <span className="font-medium">{statistics.opd_count ?? 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">IPD Visits:</span>
-                        <span className="font-medium">{statistics.ipd_visits || 0}</span>
+                        <span className="font-medium">{statistics.ipd_count ?? 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">ER Visits:</span>
-                        <span className="font-medium">{statistics.er_visits || 0}</span>
+                        <span className="font-medium">{statistics.er_count ?? 0}</span>
                       </div>
+                      {statistics.active_ipd !== undefined && (
+                        <div className="flex justify-between">
+                          <span className="text-sm">Active IPD:</span>
+                          <span className="font-medium">{statistics.active_ipd ?? 0}</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">Loading statistics...</p>
+                    <p className="text-muted-foreground">No statistics available</p>
                   )}
                 </CardContent>
               </Card>
@@ -502,19 +522,19 @@ const Dashboard = () => {
                   <CardDescription>System management</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
                     onClick={() => navigate('/admin')}
                   >
                     <Users className="mr-2 h-4 w-4" />
                     Admin Dashboard
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
                     onClick={() => navigate('/reports')}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />

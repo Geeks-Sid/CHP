@@ -1,19 +1,19 @@
 
-import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/context/AuthContext';
+import { useState } from 'react';
 
 const Profile = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  
+
   const [profileData, setProfileData] = useState({
     name: "Dr. Sarah Johnson",
     email: "sarah.johnson@example.com",
@@ -21,13 +21,13 @@ const Profile = () => {
     specialization: "Family Medicine",
     bio: "Board-certified family physician with 10 years of experience in primary care and preventive medicine.",
   });
-  
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  
+
   const [notificationSettings, setNotificationSettings] = useState({
     email: true,
     desktop: true,
@@ -35,36 +35,36 @@ const Profile = () => {
     messages: true,
     updates: false,
   });
-  
+
   const handleProfileChange = (field: string, value: string) => {
     setProfileData({ ...profileData, [field]: value });
   };
-  
+
   const handlePasswordChange = (field: string, value: string) => {
     setPasswordData({ ...passwordData, [field]: value });
   };
-  
+
   const handleNotificationToggle = (field: string) => {
     setNotificationSettings({
       ...notificationSettings,
       [field]: !notificationSettings[field as keyof typeof notificationSettings],
     });
   };
-  
+
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, send data to API
     console.log("Profile data:", profileData);
-    
+
     toast({
       title: "Profile Updated",
       description: "Your profile information has been updated successfully.",
     });
   };
-  
+
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         title: "Error",
@@ -73,37 +73,37 @@ const Profile = () => {
       });
       return;
     }
-    
+
     // In a real app, send data to API
     console.log("Password data:", passwordData);
-    
+
     toast({
       title: "Password Updated",
       description: "Your password has been changed successfully.",
     });
-    
+
     setPasswordData({
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
   };
-  
+
   const handleNotificationsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, send data to API
     console.log("Notification settings:", notificationSettings);
-    
+
     toast({
       title: "Notification Settings Updated",
       description: "Your notification preferences have been saved.",
     });
   };
-  
+
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-2xl font-bold mb-6">My Profile</h1>
-      
+
       <div className="flex flex-col md:flex-row gap-6 mb-6">
         <Card className="md:w-1/3">
           <CardContent className="pt-6 text-center">
@@ -118,7 +118,7 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="md:w-2/3">
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
@@ -142,14 +142,14 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <Tabs defaultValue="profile" className="mt-6">
         <TabsList className="mb-4">
           <TabsTrigger value="profile">Profile Settings</TabsTrigger>
           <TabsTrigger value="password">Change Password</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="profile">
           <Card>
             <form onSubmit={handleProfileSubmit}>
@@ -208,7 +208,7 @@ const Profile = () => {
             </form>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="password">
           <Card>
             <form onSubmit={handlePasswordSubmit}>
@@ -251,7 +251,7 @@ const Profile = () => {
             </form>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="notifications">
           <Card>
             <form onSubmit={handleNotificationsSubmit}>
@@ -284,7 +284,7 @@ const Profile = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="font-medium">Notification Types</h3>
                     <div className="flex items-center justify-between">

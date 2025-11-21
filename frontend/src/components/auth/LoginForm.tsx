@@ -54,23 +54,23 @@ const LoginForm = () => {
     switch (role) {
       case 'patient':
         setUsername('patient@example.com');
-        setPassword('password');
+        setPassword('Password123!');
         break;
       case 'receptionist':
         setUsername('receptionist@example.com');
-        setPassword('password');
+        setPassword('Password123!');
         break;
       case 'clinician':
         setUsername('clinician@example.com');
-        setPassword('password');
+        setPassword('Password123!');
         break;
       case 'pharmacy':
         setUsername('pharmacy@example.com');
-        setPassword('password');
+        setPassword('Password123!');
         break;
       case 'warehousemanager':
         setUsername('warehouse@example.com');
-        setPassword('password');
+        setPassword('Password123!');
         break;
     }
   };
