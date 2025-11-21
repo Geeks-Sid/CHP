@@ -22,6 +22,7 @@
         "test:integration": "jest --config jest-e2e.config.ts",
         "test:security": "jest --testPathPattern=security",
         "migrate:dev": "node scripts/migrate.js",
+        "icd10:import": "ts-node -r tsconfig-paths/register scripts/icd10-import.ts",
         "openapi:generate": "node -e \"require('fs').writeFileSync('openapi.json', JSON.stringify(require('./dist/main').default, null, 2))\"",
         "openapi:validate": "npx @stoplight/spectral-cli lint openapi.json || echo 'OpenAPI validation - install @stoplight/spectral-cli for full validation'",
         "db:generate-sample-data": "ts-node -r tsconfig-paths/register ../database/scripts/generate-sample-data.ts"
@@ -44,7 +45,8 @@
         "bcryptjs": "^2.4.3",
         "jsonwebtoken": "^9.0.2",
         "@opentelemetry/api": "^1.8.0",
-        "prom-client": "^15.1.0"
+        "prom-client": "^15.1.0",
+        "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@nestjs/cli": "^10.2.1",
@@ -71,7 +73,9 @@
         "tsconfig-paths": "^4.2.0",
         "typescript": "^5.3.3",
         "testcontainers": "^10.10.2",
-        "@types/supertest": "^2.0.16"
+        "@types/supertest": "^2.0.16",
+        "@types/xlsx": "^0.0.36",
+        "dotenv": "^16.3.1"
     },
     "jest": {
         "moduleFileExtensions": [
@@ -94,5 +98,8 @@
         }
     },
     "main": "index.js",
+    "bin": {
+        "icd-10": "./bin/icd-10"
+    },
     "keywords": []
 }

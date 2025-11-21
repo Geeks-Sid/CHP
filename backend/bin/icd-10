@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+/**
+ * ICD-10 Import CLI
+ * 
+ * Usage:
+ *   npx icd-10 import [--file path/to/file.xlsx]
+ *   npm run icd10:import [-- --file path/to/file.xlsx]
+ */
+
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+const scriptPath = path.join(__dirname, '../scripts/icd10-import.ts');
+const args = process.argv.slice(2);
+
+// If first arg is 'import', remove it (for npx icd-10 import compatibility)
+if (args[0] === 'import') {
+  args.shift();
+}
+
+// Check if script exists
+if (!fs.existsSync(scriptPath)) {
+  console.error(`Error: Script not found at ${scriptPath}`);
+  process.exit(1);
+}
+
+// Find ts-node and tsconfig-paths
+let tsNodePath;
+let tsConfigPathsPath;
+
+try {
+  tsNodePath = require.resolve('ts-node/register');
+} catch (e) {
+  console.error('Error: ts-node not found. Please install it: npm install ts-node --save-dev');
+  process.exit(1);
+}
+
+try {
+  tsConfigPathsPath = require.resolve('tsconfig-paths/register');
+} catch (e) {
+  console.error('Error: tsconfig-paths not found. Please install it: npm install tsconfig-paths --save-dev');
+  process.exit(1);
+}
+
+// Run the TypeScript script with ts-node
+const child = spawn(
+  'node',
+  [
+    '-r', tsConfigPathsPath,
+    '-r', tsNodePath,
+    scriptPath,
+    ...args
+  ],
+  {
+    stdio: 'inherit',
+    cwd: path.join(__dirname, '..'),
+    shell: true
+  }
+);
+
+child.on('exit', (code) => {
+  process.exit(code || 0);
+});
+
+child.on('error', (error) => {
+  console.error('Error running script:', error.message);
+  process.exit(1);
+});
+
