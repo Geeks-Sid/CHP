@@ -238,8 +238,11 @@ const AppointmentsList = () => {
                       </p>
                     )}
                     <div className="flex space-x-2 mt-4">
+                      <Link to={`/visits/${visit.visit_occurrence_id}`} className="flex-1">
+                        <Button variant="default" className="w-full">View Details</Button>
+                      </Link>
                       <Link to={`/appointments/${visit.visit_occurrence_id}`} className="flex-1">
-                        <Button variant="outline" className="w-full">View/Edit</Button>
+                        <Button variant="outline" className="w-full">Edit</Button>
                       </Link>
                       {status === 'Scheduled' && (user?.role === 'receptionist' || user?.role === 'clinician') && (
                         <Button

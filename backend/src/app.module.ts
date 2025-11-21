@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
+import { DiagnosesModule } from './diagnoses/diagnoses.module';
 import { DocumentsModule } from './documents/documents.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { FhirModule } from './fhir/fhir.module';
@@ -45,6 +46,7 @@ import { VisitsModule } from './visits/visits.module';
     PatientsModule,
     VisitsModule,
     ProceduresModule,
+    DiagnosesModule,
     MedicationsModule,
     PrescriptionsModule,
     DocumentsModule,

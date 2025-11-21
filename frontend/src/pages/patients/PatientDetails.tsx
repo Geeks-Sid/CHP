@@ -8,9 +8,10 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CalendarPlus, Edit, FileText } from 'lucide-react';
+import { Activity, ArrowLeft, CalendarPlus, Edit, FileText } from 'lucide-react';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DiagnosisList from '../diagnoses/DiagnosisList';
 
 interface Patient {
   person_id: number;
@@ -280,6 +281,10 @@ const PatientDetails = () => {
             <FileText className="h-4 w-4 mr-2" />
             Overview
           </TabsTrigger>
+          <TabsTrigger value="diagnoses" className="flex items-center">
+            <Activity className="h-4 w-4 mr-2" />
+            Diagnoses
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -320,6 +325,10 @@ const PatientDetails = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="diagnoses" className="space-y-4">
+          <DiagnosisList personId={patient?.person_id} showActions={true} />
         </TabsContent>
       </Tabs>
     </div>
