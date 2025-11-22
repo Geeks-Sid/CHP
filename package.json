@@ -5,14 +5,14 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n \"DB,BACKEND,FRONTEND\" -c \"blue,green,yellow\" \"npm run dev:db\" \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:db": "cd database && docker-compose up",
+    "dev:db": "cd database && docker compose up",
     "dev:backend": "cd backend && npm run start:dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:db:detached": "cd database && docker-compose up -d",
-    "stop:db": "cd database && docker-compose down",
+    "dev:db:detached": "cd database && docker compose up -d",
+    "stop:db": "cd database && docker compose down",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd backend && npm run build && cd ../frontend && npm run build",
-    "clean": "cd database && docker-compose down -v && cd ../backend && rm -rf dist node_modules && cd ../frontend && rm -rf dist node_modules",
+    "clean": "cd database && docker compose down -v && cd ../backend && rm -rf dist node_modules && cd ../frontend && rm -rf dist node_modules",
     "healthcheck": "cd backend && npm run healthcheck"
   },
   "devDependencies": {

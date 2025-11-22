@@ -26,9 +26,9 @@ import { SecretsService } from './services/secrets.service';
 })
 export class SecurityModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
-        // Apply security headers to all routes
-        consumer.apply(SecurityHeadersMiddleware).forRoutes('*');
-
+        // Security headers are now registered as Fastify hooks in main.ts
+        // to avoid type issues with FastifyReply
+        
         // Apply payload size limits to all routes
         consumer.apply(PayloadSizeMiddleware).forRoutes('*');
     }

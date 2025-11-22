@@ -118,13 +118,13 @@ export class DiagnosesService {
     ): Promise<DiagnosisResponseDto[]> {
         if (filters?.visit_id) {
             const diagnoses = await this.diagnosesRepository.findByVisitId(filters.visit_id);
-            return diagnoses.map((d) => this.mapToResponseDto(d));
+            return Promise.all(diagnoses.map((d) => this.mapToResponseDto(d)));
         }
 
         const diagnoses = await this.diagnosesRepository.findByPersonId(personId, {
             active_only: filters?.active_only,
         });
-        return diagnoses.map((d) => this.mapToResponseDto(d));
+        return Promise.all(diagnoses.map((d) => this.mapToResponseDto(d)));
     }
 
     /**
@@ -132,7 +132,7 @@ export class DiagnosesService {
      */
     async getDiagnosesByVisit(visitId: number): Promise<DiagnosisResponseDto[]> {
         const diagnoses = await this.diagnosesRepository.findByVisitId(visitId);
-        return diagnoses.map((d) => this.mapToResponseDto(d));
+        return Promise.all(diagnoses.map((d) => this.mapToResponseDto(d)));
     }
 
     /**
@@ -347,7 +347,7 @@ export class DiagnosesService {
         const result = await this.diagnosesRepository.searchDiagnoses(filters);
 
         return {
-            items: result.diagnoses.map((d) => this.mapToResponseDto(d)),
+            items: await Promise.all(result.diagnoses.map((d) => this.mapToResponseDto(d))),
             nextCursor: result.nextCursor,
         };
     }

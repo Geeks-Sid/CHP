@@ -1,5 +1,5 @@
 /**
- * Sample Data Generation Script
+ * Sample Data Generation Script (JavaScript version)
  * 
  * Generates realistic sample data for development and demo purposes:
  * - ~100 persons (patients)
@@ -8,15 +8,11 @@
  * - Various visit types and date ranges
  * 
  * Usage:
- *   ts-node database/scripts/generate-sample-data.ts
- * 
- * Or with environment variables:
- *   PGHOST=localhost PGPORT=5432 PGDATABASE=hospital PGUSER=hospital PGPASSWORD=password \
- *   ts-node database/scripts/generate-sample-data.ts
+ *   node database/scripts/generate-sample-data.js
  */
 
-import { Pool } from 'pg';
-import * as crypto from 'crypto';
+const { Pool } = require('pg');
+const crypto = require('crypto');
 
 // Configuration
 const CONFIG = {
@@ -79,7 +75,7 @@ const RACES = [
   { concept_id: 8657, name: 'American Indian or Alaska Native' },
 ];
 
-const VISIT_TYPES: ('OPD' | 'IPD' | 'ER')[] = ['OPD', 'IPD', 'ER'];
+const VISIT_TYPES = ['OPD', 'IPD', 'ER'];
 const VISIT_CONCEPTS = [9201, 9202, 9203]; // Outpatient, Inpatient, Emergency
 
 const PROCEDURE_CONCEPTS = [
@@ -95,35 +91,35 @@ const DRUG_TYPES = [38000177, 38000178]; // Prescription written, etc.
 /**
  * Generate random date between start and end
  */
-function randomDate(start: Date, end: Date): Date {
+function randomDate(start, end) {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
 /**
  * Generate random integer between min and max (inclusive)
  */
-function randomInt(min: number, max: number): number {
+function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
  * Generate random element from array
  */
-function randomElement<T>(array: T[]): T {
+function randomElement(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
 /**
  * Generate MRN
  */
-function generateMRN(year: number, sequence: number): string {
+function generateMRN(year, sequence) {
   return `MRN-${year}-${String(sequence).padStart(6, '0')}`;
 }
 
 /**
  * Generate visit number
  */
-function generateVisitNumber(year: number, sequence: number): string {
+function generateVisitNumber(year, sequence) {
   return `V-${year}-${String(sequence).padStart(6, '0')}`;
 }
 
@@ -144,7 +140,7 @@ async function generateSampleData() {
 
     // Generate persons
     console.log(`Generating ${CONFIG.PERSONS_COUNT} persons...`);
-    const persons: Array<{ person_id: number; mrn: string }> = [];
+    const persons = [];
 
     for (let i = 0; i < CONFIG.PERSONS_COUNT; i++) {
       const firstName = randomElement(FIRST_NAMES);
@@ -189,7 +185,7 @@ async function generateSampleData() {
     // Generate visits
     console.log('Generating visits...');
     let visitSequence = 1;
-    const visits: Array<{ visit_occurrence_id: number; person_id: number; visit_start: Date }> = [];
+    const visits = [];
 
     for (const person of persons) {
       const visitCount = randomInt(
@@ -199,7 +195,8 @@ async function generateSampleData() {
 
       for (let j = 0; j < visitCount; j++) {
         const visitType = randomElement(VISIT_TYPES);
-        const visitConceptId = VISIT_CONCEPTS[VISIT_TYPES.indexOf(visitType)];
+        const visitTypeIndex = VISIT_TYPES.indexOf(visitType);
+        const visitConceptId = VISIT_CONCEPTS[visitTypeIndex];
 
         // Generate visit date (between 1 year ago and now)
         const visitStart = randomDate(
@@ -208,7 +205,7 @@ async function generateSampleData() {
         );
 
         // For IPD, visits can be longer; for OPD/ER, usually same day
-        let visitEnd: Date | null = null;
+        let visitEnd = null;
         if (visitType === 'IPD') {
           // IPD visits: 1-14 days
           visitEnd = new Date(visitStart.getTime() + randomInt(1, 14) * 24 * 60 * 60 * 1000);
@@ -265,7 +262,7 @@ async function generateSampleData() {
           [
             visit.person_id,
             randomElement(PROCEDURE_CONCEPTS),
-            visit.visit_start, // Procedure on visit date
+            visit.visit_start.toISOString(), // Procedure on visit date
             4478661, // Inpatient procedure
             visit.visit_occurrence_id,
           ],
@@ -336,5 +333,5 @@ if (require.main === module) {
   });
 }
 
-export { generateSampleData };
+module.exports = { generateSampleData };
 

@@ -6,10 +6,8 @@ import {
 } from '@nestjs/common';
 import { logger } from '../common/logger/logger.config';
 import { InventoryService } from '../inventory/inventory.service';
-import {
-    CreateMedicationData,
-    MedicationsService,
-} from '../medications/medications.service';
+import { MedicationsService } from '../medications/medications.service';
+import { CreateMedicationData } from '../medications/medications.repository';
 import {
     CreatePrescriptionData,
     PrescriptionsRepository,
@@ -123,9 +121,9 @@ export class PrescriptionsService {
             try {
                 // Create outgoing transaction to decrement inventory
                 await this.inventoryService.createTransaction({
-                    item_type: 'medication',
+                    item_type: 'medication' as any,
                     item_id: medicationInventoryId,
-                    transaction_type: 'outgoing',
+                    transaction_type: 'outgoing' as any,
                     quantity: prescription.quantity,
                     reference_type: 'prescription',
                     reference_id: prescriptionId,

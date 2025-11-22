@@ -29,25 +29,25 @@ export class S3Service {
     private readonly region: string;
 
     constructor(private readonly configService: ConfigService<Configuration>) {
-        const endpoint = this.configService.get('S3_ENDPOINT', { infer: true });
-        const accessKeyId = this.configService.get('S3_ACCESS_KEY', { infer: true });
-        const secretAccessKey = this.configService.get('S3_SECRET_KEY', { infer: true });
-        this.bucket = this.configService.get('S3_BUCKET', { infer: true });
-        this.region = this.configService.get('S3_REGION', { infer: true });
+        const endpoint = this.configService.get('S3_ENDPOINT', { infer: true }) || 'http://localhost:9000';
+        const accessKeyId = this.configService.get('S3_ACCESS_KEY', { infer: true }) || 'minio';
+        const secretAccessKey = this.configService.get('S3_SECRET_KEY', { infer: true }) || 'minio123';
+        this.bucket = this.configService.get('S3_BUCKET', { infer: true }) || 'documents';
+        this.region = this.configService.get('S3_REGION', { infer: true }) || 'us-east-1';
 
         // Configure S3 client
         // For MinIO, we need to set forcePathStyle
         const isMinIO = endpoint && !endpoint.includes('amazonaws.com');
 
         this.s3Client = new S3Client({
-            endpoint: endpoint,
+            endpoint: endpoint as any,
             region: this.region,
             credentials: {
-                accessKeyId,
-                secretAccessKey,
+                accessKeyId: accessKeyId as any,
+                secretAccessKey: secretAccessKey as any,
             },
             forcePathStyle: isMinIO, // Required for MinIO
-        });
+        } as any);
 
         logger.info({ endpoint, bucket: this.bucket, region: this.region }, 'S3 client initialized');
     }

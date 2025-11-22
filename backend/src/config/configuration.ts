@@ -44,6 +44,8 @@ const configSchema = z.object({
   // Feature Flags
   FHIR_WRITE_ENABLED: z.string().optional(),
   EXTERNAL_TERMINOLOGY_ENABLED: z.string().optional(),
+  ONTOSERVER_URL: z.string().optional(),
+  SNOWSTORM_URL: z.string().optional(),
   MULTI_TENANT_ENABLED: z.string().optional(),
   AUDIT_ENABLED: z.string().optional(),
   DOCUMENTS_UPLOAD_ENABLED: z.string().optional(),

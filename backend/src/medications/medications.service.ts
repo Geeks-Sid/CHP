@@ -153,7 +153,7 @@ export class MedicationsService {
                 throw new BadRequestException('Drug exposure end date cannot be before start date');
             }
 
-            updateData.drug_exposure_end = endDate;
+            updateData.drug_exposure_end = endDate ?? undefined;
         }
 
         if (data.drug_type_concept_id !== undefined) {

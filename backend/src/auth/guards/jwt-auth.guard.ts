@@ -36,8 +36,8 @@ export class JwtAuthGuard implements CanActivate {
       };
 
       return true;
-    } catch (error) {
-      logger.warn({ error: error.message }, 'JWT verification failed');
+        } catch (error: any) {
+            logger.warn({ error: error?.message || String(error) }, 'JWT verification failed');
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

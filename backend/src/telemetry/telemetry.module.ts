@@ -9,8 +9,8 @@ import { CorrelationService } from './services/correlation.service';
 })
 export class TelemetryModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
-        // Apply correlation middleware to all routes
-        consumer.apply(CorrelationMiddleware).forRoutes('*');
+        // Correlation middleware is now registered as Fastify hook in main.ts
+        // to avoid type issues with FastifyReply
     }
 }
 

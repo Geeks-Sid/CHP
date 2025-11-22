@@ -73,7 +73,7 @@ export class VisitsService {
             person_id: data.person_id,
             visit_concept_id: visitConceptId,
             visit_start: visitStart,
-            visit_end: visitEnd,
+            visit_end: visitEnd ?? undefined,
             visit_type: data.visit_type,
             department_id: data.department_id,
             provider_id: data.provider_id,
@@ -162,7 +162,7 @@ export class VisitsService {
             if (visitEnd && isNaN(visitEnd.getTime())) {
                 throw new BadRequestException('Invalid visit end date');
             }
-            updateData.visit_end = visitEnd;
+            updateData.visit_end = visitEnd ?? undefined;
         } else {
             updateData.visit_end = existingVisit.visit_end;
         }
@@ -180,7 +180,7 @@ export class VisitsService {
             const hasOverlap = await this.visitsRepository.hasOverlappingInpatientVisit(
                 existingVisit.person_id,
                 finalStart,
-                finalEnd,
+                finalEnd ?? null,
                 visitId, // Exclude current visit
             );
 

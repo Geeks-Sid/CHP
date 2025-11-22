@@ -80,7 +80,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       errorResponse.message = redactedMessage;
     }
 
-    response.status(status).send(errorResponse);
+    (response as any).code(status).send(errorResponse);
   }
 
   /**

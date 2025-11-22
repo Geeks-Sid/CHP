@@ -60,6 +60,9 @@ export class UsersService {
 
       // Get user with roles
       const userWithRoles = await this.usersRepository.findById(user.user_id);
+      if (!userWithRoles) {
+        throw new Error('Failed to retrieve created user');
+      }
       return userWithRoles;
     } catch (error: any) {
       if (error.message === 'USERNAME_EXISTS') {
@@ -139,6 +142,9 @@ export class UsersService {
 
       // Get user with roles
       const userWithRoles = await this.usersRepository.findById(userId);
+      if (!userWithRoles) {
+        throw new NotFoundException('User not found');
+      }
       return userWithRoles;
     } catch (error: any) {
       if (error.message === 'EMAIL_EXISTS') {

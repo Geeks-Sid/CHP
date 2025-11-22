@@ -26,29 +26,32 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Map backend roles to frontend UserRole
-// This is a simple mapping - you may need to adjust based on your actual role names
+// Backend returns capitalized role names: "Admin", "Doctor", "Patient", "Receptionist", "Pharmacist", "Warehouse Manager"
 function mapBackendRoleToFrontendRole(roles: string[]): UserRole {
+  // Normalize roles to lowercase for comparison
+  const normalizedRoles = roles.map(r => r.toLowerCase());
+  
   // Check for admin first
-  if (roles.includes('admin') || roles.includes('administrator')) {
+  if (normalizedRoles.includes('admin') || normalizedRoles.includes('administrator')) {
     return 'admin';
   }
-  // Check for clinician/doctor
-  if (roles.includes('clinician') || roles.includes('doctor') || roles.includes('physician')) {
+  // Check for clinician/doctor (backend uses "Doctor")
+  if (normalizedRoles.includes('clinician') || normalizedRoles.includes('doctor') || normalizedRoles.includes('physician')) {
     return 'clinician';
   }
-  // Check for receptionist
-  if (roles.includes('receptionist') || roles.includes('reception')) {
+  // Check for receptionist (backend uses "Receptionist")
+  if (normalizedRoles.includes('receptionist') || normalizedRoles.includes('reception')) {
     return 'receptionist';
   }
-  // Check for pharmacy
-  if (roles.includes('pharmacy') || roles.includes('pharmacist')) {
+  // Check for pharmacy (backend uses "Pharmacist")
+  if (normalizedRoles.includes('pharmacy') || normalizedRoles.includes('pharmacist')) {
     return 'pharmacy';
   }
-  // Check for warehouse manager
-  if (roles.includes('warehouse') || roles.includes('warehousemanager')) {
+  // Check for warehouse manager (backend uses "Warehouse Manager" - two words)
+  if (normalizedRoles.some(r => r.includes('warehouse'))) {
     return 'warehousemanager';
   }
-  // Default to patient
+  // Default to patient (backend uses "Patient")
   return 'patient';
 }
 

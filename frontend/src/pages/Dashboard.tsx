@@ -546,6 +546,164 @@ const Dashboard = () => {
           </>
         );
 
+      case 'pharmacy':
+        return (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <ClipboardList className="mr-2 h-5 w-5 text-orange-500" />
+                    Pending Prescriptions
+                  </CardTitle>
+                  <CardDescription>Prescriptions awaiting fulfillment</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/prescriptions')}
+                  >
+                    View Prescriptions
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Users className="mr-2 h-5 w-5 text-orange-500" />
+                    Medication Inventory
+                  </CardTitle>
+                  <CardDescription>Manage medication stock</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/inventory/medicine')}
+                  >
+                    View Inventory
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Clock className="mr-2 h-5 w-5 text-orange-500" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>Pharmacy operations</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/prescriptions')}
+                  >
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    Fill Prescriptions
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/inventory/medicine')}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Manage Inventory
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        );
+
+      case 'warehousemanager':
+        return (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Users className="mr-2 h-5 w-5 text-indigo-500" />
+                    Warehouse Inventory
+                  </CardTitle>
+                  <CardDescription>Manage warehouse items</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/inventory/warehouse')}
+                  >
+                    View Warehouse
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <ClipboardList className="mr-2 h-5 w-5 text-indigo-500" />
+                    Medication Inventory
+                  </CardTitle>
+                  <CardDescription>Manage medication stock</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/inventory/medicine')}
+                  >
+                    View Medications
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Clock className="mr-2 h-5 w-5 text-indigo-500" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>Inventory management</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/inventory/warehouse')}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Warehouse Items
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/inventory/medicine')}
+                  >
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    Medication Stock
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        );
+
       default:
         return (
           <div className="text-center py-12">

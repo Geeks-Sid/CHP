@@ -29,7 +29,7 @@ export interface PresignResponse {
 
 export interface ConfirmUploadRequest {
     upload_id: string;
-    file_path: string;
+    file_path?: string;
     patient_person_id?: number;
     document_type?: string;
     description?: string;
