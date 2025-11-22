@@ -12,6 +12,7 @@ import Layout from "@/components/layout/Layout";
 
 // Pages
 import Dashboard from "@/pages/Dashboard";
+import Features from "@/pages/Features";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
@@ -77,6 +78,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/features" element={<Features />} />
 
             {/* Auth Routes */}
             <Route element={<AuthLayout />}>
